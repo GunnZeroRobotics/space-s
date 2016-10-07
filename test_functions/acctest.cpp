@@ -14,17 +14,11 @@
 // acc(no items) = 0.01205259313 ≈ 0.0121 m/s
 //
 
-float o[3];
 float v[3];
-float s[3];
 
 void init()
 {
-    for (int i = 0; i < 3; i++) {
-        o[i] = 0.0;
-        s[i] = -0.75;
-        v[i] = 0.0;
-    }
+    v[0] = v[1] = 0.0;
     v[2] = 10.0;
 }
 
