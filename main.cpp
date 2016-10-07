@@ -1,11 +1,11 @@
-int game_time; 
+int game_time;
 
 float my_state[3]; //our sat position
 float other_state[3]; //enemy sat position
 float items[6][3]; //0-1 Large, 2-3 Medium, 4-5 Small
 float target[3]; //target locations for moveTo function
 float origin[3]; //origin of field, move to here in ENDGAME phase
-float spsLoc[3]; //SPS target locations 
+float spsLoc[3]; //SPS target locations
 
 enum State {
 	SPS, //starting game phase, drops SPS items
@@ -13,14 +13,14 @@ enum State {
 	ASSEMBLY, //
 	STEAL, //
 	ENDGAME, //uses all remaining fuel to move to origin
+};
 
-}
 State state;
 
 void init()
 {
 	game_time = 0;
-	origin[0] = origin[1] = origin[2] = 0.0; 
+	origin[0] = origin[1] = origin[2] = 0.0;
 	target[0] = target[1] = target[2] = 0.0;
 	state = SPS;
 	game.dropSPS();
@@ -30,11 +30,11 @@ void init()
 }
 
 void loop()
-{ 
+{
 	updateState();
 	game_time++;
 
-	switch (state) { 
+	switch (state) {
 	case SPS: //SPS phase
 		switch (game.getNumSPSHeld()) {
 			case 2: //2 SPSs left
@@ -44,7 +44,7 @@ void loop()
 				spsLoc[1] = 0.5;
 				spsLoc[2] = 0;
 				break;
-			case 1: //1 SPS left 
+			case 1: //1 SPS left
 				moveTo(spsLoc);
 				break;
 		}
@@ -72,7 +72,7 @@ void updateState()
 {
 	getSphereStates();
 
-	for (i = 0; i < 6; ++i) {
+	for (int i = 0; i < 6; ++i) {
         game.getItemLoc(items[i], i);
     }
 
