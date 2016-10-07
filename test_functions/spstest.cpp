@@ -31,17 +31,17 @@ void loop()
     }
 
 
-	if (gameTime < 40) {
-		float temp[3] = {-0.18, 0.1, -0.18};
+	if (gameTime < 50) {
+		float temp[3] = {0, 0.2, 0};
         // spsLoc[1] = temp;
 		api.setPositionTarget(temp);
-	} else if (gameTime == 40) {
+	} else if (gameTime == 50) {
 		game.dropSPS(); 
-	} else if (gameTime > 40 && gameTime < 80) {
-		float temp[3] = {-0.36, 0.36, -0.36};
+	} else if (gameTime > 50 && gameTime < 100) {
+		float temp[3] = {0, 0, 0.2};
         // spsLoc[2] = temp;
 		api.setPositionTarget(temp); 
-	} else if (gameTime == 80) {
+	} else if (gameTime == 100) {
         game.dropSPS();
         game.getZone(assemblyZone);
         DEBUG(("%f, %f, %f, %f", assemblyZone[0], assemblyZone[1], assemblyZone[2], assemblyZone[3]));
