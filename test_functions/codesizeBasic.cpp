@@ -1,13 +1,9 @@
-const static float acc = 0.121; // meters/second
-const static int totalGameTime = 180; // seconds
-
 int gameTime;
 
 float myState[12]; // our satellite state
 float myPos[3];
 float myVel[3];
 float otherState[12]; // enemy satellite state
-float otherPos[3];
 
 float itemPos[6][3];
 
@@ -68,7 +64,6 @@ void updateState()
     for (int i = 0; i < 3; i++) {
         myPos[i] = myState[i];
         myVel[i] = myState[i + 3];
-        otherPos[i] = otherState[i];
     }
 
     // Item Positions
