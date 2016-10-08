@@ -1,4 +1,4 @@
-// PROBABLY INCORRECT: const static float acc = 0.121; // meters/second
+const static float acc = 0.121; // meters/second
 const static int totalGameTime = 180; // seconds
 
 int gameTime;
@@ -27,11 +27,20 @@ void loop()
 { 
    gameTime++; 
    updateState();
-   
-   dock(0);
+   dock(5);
 }
 
 // MARK: Helper Methods
+
+void moveFast(float target[3]) 
+{
+    float vectorBetween[3];
+    mathVecSubtract(vectorBetween, target, myPos, 3);
+    for (int i = 0; i < 3; i++) {
+        vectorBetween[i] *= 10;
+    }
+    api.setVelocityTarget(vectorBetween);
+}
 
 void updateState()
 {
@@ -70,8 +79,8 @@ void dock(int itemID)
         vectorTarget[i] = itemPos[itemID][i];
     }
     mathVecSubtract(vectorBetween, itemPos[itemID], myPos,3);
-    float dockingDist = (itemID < 2) ? 0.162 : ((itemID < 4) ? 0.139 : 0.128);
-    float mProportion = (mathVecMagnitude(vectorBetween, 3) - dockingDist) / mathVecMagnitude(vectorTarget, 3);
+    float dockingDist = (itemID < 2) ? 0.162 : ((itemID < 4) ? 0.149 : 0.135);
+    float mProportion = (mathVecMagnitude(vectorBetween, 3) - dockingDist * 0.9) / mathVecMagnitude(vectorTarget, 3);
     for (int i = 0; i < 3; i++) {
         vectorBetween[i] = vectorBetween[i] * mProportion;
         vectorTarget[i] = vectorBetween[i] + myPos[i];
@@ -81,7 +90,7 @@ void dock(int itemID)
     if (mathVecMagnitude(myVel, 3) > 0.01 || mathVecMagnitude(vectorBetween, 3) > dockingDist) {
         api.setPositionTarget(vectorTarget);
         pointToward(itemPos[itemID]);
-    } else {
+    } else if (game.hasItem(itemID) != 1){
         game.dockItem();
     }
 }

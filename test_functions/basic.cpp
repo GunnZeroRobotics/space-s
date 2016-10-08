@@ -11,6 +11,9 @@ float otherPos[3];
 
 float itemPos[6][3];
 
+float assemblyZone[4];
+float realAss[3];
+
 void init()
 {
     // Initial item positions
@@ -21,27 +24,49 @@ void init()
     }
     
     gameTime = 0;
+
 }
 
 void loop()
 { 
    gameTime++; 
    updateState();
-   float t[3] = {0, 0.75, 0};
-   moveFast(t);
+
+   if (gameTime < 20) {
+       float temp[3] = {-0.5, 0, 0};
+       api.setPositionTarget(temp);
+   } else if (gameTime == 20) {
+       game.dropSPS();
+   } else if (gameTime > 20 && gameTime < 40) {
+       float temp[3] = {-0.5, 0.5, 0.75};
+		api.setPositionTarget(temp);
+   } else if (gameTime == 40) {
+		game.dropSPS(); 
+	} else if (gameTime > 40 && gameTime < 65) {
+		float temp[3] = {0.13, 0.13, 0.13};
+		api.setPositionTarget(temp); 
+	} else if (gameTime == 65) {
+        game.dropSPS();
+        game.getZone(assemblyZone);
+        DEBUG(("%f, %f, %f, %f", assemblyZone[0], assemblyZone[1], assemblyZone[2], assemblyZone[3]));
+        for (int i = 0; i < 3; i++) {
+            realAss[i] = assemblyZone[i];
+        }
+    } else {
+        int IDcount = 0;
+        while(game.hasItemBeenPickedUp(IDcount) && game.hasItem(IDcount) != 1) {
+            IDcount++;
+            if (IDcount > 5) {
+                IDcount = 0;
+                break;
+            }
+        }
+        dock(IDcount);
+    }
+ 
 }
 
 // MARK: Helper Methods
-
-void moveFast(float target[3]) 
-{
-    float vectorBetween[3];
-    mathVecSubtract(vectorBetween, target, myPos, 3);
-    for (int i = 0; i < 3; i++) {
-        vectorBetween[i] *= 10;
-    }
-    api.setVelocityTarget(vectorBetween);
-}
 
 void updateState()
 {
@@ -74,7 +99,20 @@ void pointToward(float target[3])
 
 void dock(int itemID)
 {
+    if (game.hasItem(itemID) == 1) {
+        float vb[3];
+        mathVecSubtract(vb, realAss, myPos, 3);
+        if (mathVecMagnitude(vb, 3) < 0.05) {
+            game.dropItem();
+        } else {
+           api.setPositionTarget(realAss);
+            pointToward(realAss);
+        }
+        return;
+    }
+
     float vectorBetween[3];
+
     float vectorTarget[3];
     for (int i = 0; i < 3; i++) {
         vectorTarget[i] = itemPos[itemID][i];
