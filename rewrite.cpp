@@ -1,6 +1,5 @@
 // PROBABLY INCORRECT: const static float acc = 0.121; // meters/second
 const static int totalGameTime = 180; // seconds
-const static float origin[3] = {0, 0, 0};
 
 int gameTime;
 
@@ -27,17 +26,29 @@ void loop()
 { 
    gameTime++; 
    updateState();
+   
+   dock(0);
 }
 
 // MARK: Helper Methods
 
 void updateState()
 {
+    // SPHERE States
     api.getMyZRState(myState);
     api.getOtherZRState(otherState);
     for (int i = 0; i < 3; i++) {
         myPos[i] = myState[i];
         otherPos[i] = otherState[i];
+    }
+
+    // Item Positions
+    for (int i = 0; i < 6; i++) {
+        float itemState[12];
+        game.getItemZRState(itemState, i);
+        for (int j = 0; j < 3; j++) {
+            itemPos[i][j] = itemState[j];
+        }
     }
 }
 
@@ -47,4 +58,17 @@ void pointToward(float target[3])
     mathVecSubtract(vectorBetween, target, myPos, 3);
     mathVecNormalize(vectorBetween, 3);
     api.setAttitudeTarget(vectorBetween);
+}
+
+void dock(int itemID)
+{
+    float vectorBetween[3];
+    mathVecSubtract(vectorBetween, itemPos[itemID], myPos, 3);
+    float maxDockingDist = (itemID < 2) ? 0.17 : ((itemID < 4) ? 0.157 : 0.143);
+    if (mathVecMagnitude(vectorBetween, 3) > maxDockingDist) {
+        api.setPositionTarget(itemPos[itemID]);
+        pointToward(itemPos[itemID]);
+    } else {
+        game.dockItem();
+    }
 }
