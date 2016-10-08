@@ -50,7 +50,7 @@ void loop()
         game.getZone(assemblyZone);
         DEBUG(("%f, %f, %f, %f", assemblyZone[0], assemblyZone[1], assemblyZone[2], assemblyZone[3]));
         for (int i = 0; i < 3; i++) {
-            realAss[i] = assemblyZone[i];
+            realAss[i] = assemblyZone[i] * 0.85;
         }
     } else {
         int IDcount = 0;
@@ -102,7 +102,7 @@ void dock(int itemID)
     if (game.hasItem(itemID) == 1) {
         float vb[3];
         mathVecSubtract(vb, realAss, myPos, 3);
-        if (mathVecMagnitude(vb, 3) < 0.05) {
+        if (mathVecMagnitude(vb, 3) < 0.03) {
             game.dropItem();
         } else {
            api.setPositionTarget(realAss);

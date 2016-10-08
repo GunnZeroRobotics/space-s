@@ -10,8 +10,8 @@
 // Testing Data:
 // Satellite traveled 1.50 meters while carrying 3 SPS (8/11 acc)
 // t = 18.4 - 18.6 seconds
-// Using t = 18.5 s, acc(3 SPS) = 0.008765522279 ≈ 0.00877 m/s
-// acc(no items) = 0.01205259313 ≈ 0.0121 m/s
+// Using t = 18.5 s, acc(3 SPS) = 0.008765522279 ≈ 0.00877 m/s^2
+// acc(no items) = 0.01205259313 ≈ 0.0121 m/s^2
 //
 
 float v[3];
