@@ -5,6 +5,7 @@ int gameTime;
 
 float myState[12]; // our satellite state
 float myPos[3];
+float myVel[3];
 float otherState[12]; // enemy satellite state
 float otherPos[3];
 
@@ -39,6 +40,7 @@ void updateState()
     api.getOtherZRState(otherState);
     for (int i = 0; i < 3; i++) {
         myPos[i] = myState[i];
+        myVel[i] = myState[i + 3];
         otherPos[i] = otherState[i];
     }
 
@@ -63,10 +65,21 @@ void pointToward(float target[3])
 void dock(int itemID)
 {
     float vectorBetween[3];
-    mathVecSubtract(vectorBetween, itemPos[itemID], myPos, 3);
-    float maxDockingDist = (itemID < 2) ? 0.17 : ((itemID < 4) ? 0.157 : 0.143);
-    if (mathVecMagnitude(vectorBetween, 3) > maxDockingDist) {
-        api.setPositionTarget(itemPos[itemID]);
+    float vectorTarget[3];
+    for (int i = 0; i < 3; i++) {
+        vectorTarget[i] = itemPos[itemID][i];
+    }
+    mathVecSubtract(vectorBetween, itemPos[itemID], myPos,3);
+    float dockingDist = (itemID < 2) ? 0.162 : ((itemID < 4) ? 0.139 : 0.128);
+    float mProportion = (mathVecMagnitude(vectorBetween, 3) - dockingDist) / mathVecMagnitude(vectorTarget, 3);
+    for (int i = 0; i < 3; i++) {
+        vectorBetween[i] = vectorBetween[i] * mProportion;
+        vectorTarget[i] = vectorBetween[i] + myPos[i];
+        vectorBetween[i] = vectorBetween[i] / mProportion;
+    }
+    
+    if (mathVecMagnitude(myVel, 3) > 0.01 || mathVecMagnitude(vectorBetween, 3) > dockingDist) {
+        api.setPositionTarget(vectorTarget);
         pointToward(itemPos[itemID]);
     } else {
         game.dockItem();
