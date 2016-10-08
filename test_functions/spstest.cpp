@@ -26,22 +26,17 @@ void loop()
 	gameTime++; 
 	updateState();
 
-    if (myPos[0] == -0.18 && myPos[1] == 0.1 && myPos[2] == -0.18) {
-        DEBUG(("WOOHOO"));
-    }
-
-
-	if (gameTime < 50) {
-		float temp[3] = {0, 0.2, 0};
-        // spsLoc[1] = temp;
+	if (gameTime < 40) {
+		float temp[3] = {-0.18, 0.1, -0.18};
+        spsLoc[1] = temp;
 		api.setPositionTarget(temp);
-	} else if (gameTime == 50) {
+	} else if (gameTime == 40) {
 		game.dropSPS(); 
-	} else if (gameTime > 50 && gameTime < 100) {
-		float temp[3] = {0, 0, 0.2};
-        // spsLoc[2] = temp;
+	} else if (gameTime > 40 && gameTime < 80) {
+		float temp[3] = {-0.36, 0.36, -0.36};
+        spsLoc[2] = temp;
 		api.setPositionTarget(temp); 
-	} else if (gameTime == 100) {
+	} else if (gameTime == 80) {
         game.dropSPS();
         game.getZone(assemblyZone);
         DEBUG(("%f, %f, %f, %f", assemblyZone[0], assemblyZone[1], assemblyZone[2], assemblyZone[3]));
