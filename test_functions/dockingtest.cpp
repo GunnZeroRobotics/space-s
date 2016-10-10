@@ -71,7 +71,7 @@ void dock(int itemID)
     }
     mathVecSubtract(vectorBetween, itemPos[itemID], myPos,3);
     float dockingDist = (itemID < 2) ? 0.162 : ((itemID < 4) ? 0.139 : 0.128);
-    float mProportion = (mathVecMagnitude(vectorBetween, 3) - dockingDist) / mathVecMagnitude(vectorTarget, 3);
+    float mProportion = (mathVecMagnitude(vectorBetween, 3) - dockingDist) / mathVecMagnitude(vectorBetween, 3);
     for (int i = 0; i < 3; i++) {
         vectorBetween[i] = vectorBetween[i] * mProportion;
         vectorTarget[i] = vectorBetween[i] + myPos[i];
