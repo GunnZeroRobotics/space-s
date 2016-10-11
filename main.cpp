@@ -1,90 +1,175 @@
-int game_time;
+const static float acc = 0.121; // meters/second
+const static int totalGameTime = 180; // seconds
 
-float my_state[3]; //our sat position
-float other_state[3]; //enemy sat position
-float items[6][3]; //0-1 Large, 2-3 Medium, 4-5 Small
-float target[3]; //target locations for moveTo function
-float origin[3]; //origin of field, move to here in ENDGAME phase
-float spsLoc[3]; //SPS target locations
+int gameTime;
 
-enum State {
-	SPS, //starting game phase, drops SPS items
-	ITEM, //
-	ASSEMBLY, //
-	STEAL, //
-	ENDGAME, //uses all remaining fuel to move to origin
-};
+float myState[12]; // our satellite state
+float myPos[3];
+float myVel[3];
+float otherState[12]; // enemy satellite state
+float otherPos[3];
 
-State state;
+float itemPos[6][3];
+
+float assemblyZone[4];
+float realAss[3];
+
+int currentBehavior;
+int targetitem;
 
 void init()
 {
-	game_time = 0;
-	origin[0] = origin[1] = origin[2] = 0.0;
-	target[0] = target[1] = target[2] = 0.0;
-	state = SPS;
-	game.dropSPS();
-	spsLoc[0] = 0.1;
-	spsLoc[1] = -0.3;
-	spsLoc[2] = 0;
+    currentBehavior = 0;
+    gameTime = 0;
 }
 
 void loop()
 {
-	updateState();
-	game_time++;
+    // update information on game state
+    gameTime++;
+    updateState();
 
-	switch (state) {
-	case SPS: //SPS phase
-		switch (game.getNumSPSHeld()) {
-			case 2: //2 SPSs left
-				moveTo(spsLoc);
-				game.dropSPS();
-				spsLoc[0] = 0.6;
-				spsLoc[1] = 0.5;
-				spsLoc[2] = 0;
-				break;
-			case 1: //1 SPS left
-				moveTo(spsLoc);
-				break;
-		}
-		break;
+    // perform the behavior we are on
+    // todo: we should go to the next behavior based on once we reach the point, instead of based on time
+    // todo: use a better SPS triangle.
+    if(currentBehavior == 0)
+    {
+        // moving towards first SPS point
+        float temp[3] = {-0.5, 0, 0};
+        moveTo(temp);
 
-	case ITEM: //Item pickup phas
-		itemLoop();
-		break;
+        // go to next behavior and drop first SPS
+        if(gameTime > 20)
+        {
+            currentBehavior = 1;
+            game.dropSPS();
+        }
+    }
+    if(currentBehavior == 1)
+    {
+        // moving towards second SPS point
+        float temp[3] = {-0.5, 0.5, 0.75};
+     	moveTo(temp);
+        // go to next behavior and drop second SPS
+        if(gameTime > 40)
+        {
+            currentBehavior = 2;
+            game.dropSPS();
+        }
+    }
+    if(currentBehavior == 2)
+    {
+        // moving towards third SPS point
+        float temp[3] = {0.13, 0.13, 0.13};
+    	moveTo(temp);
+        // go to next behavior, drop third SPS, get assembly zone
+        if(gameTime > 65)
+        {
+            currentBehavior = 3;
+            // get assembly zone info
+            game.dropSPS();
+            game.getZone(assemblyZone);
+            DEBUG(("%f, %f, %f, %f", assemblyZone[0], assemblyZone[1], assemblyZone[2], assemblyZone[3]));
+            for (int i = 0; i < 3; i++) {
+                realAss[i] = assemblyZone[i] * 0.85;
+            }
+            // choose item to go after
+            targetitem = chooseItemToPickup();
+        }
+    }
+    if(currentBehavior == 3)
+    {
+        // moving towards item and rotate to face it, to pick it up
+        float vectorBetween[3];
+        float vectorTarget[3];
+        for (int i = 0; i < 3; i++) {
+            vectorTarget[i] = itemPos[targetitem][i];
+        }
+        mathVecSubtract(vectorBetween, itemPos[targetitem], myPos,3);
+        float dockingDist = (targetitem < 2) ? 0.162 : ((targetitem < 4) ? 0.149 : 0.135);
+        float mProportion = (mathVecMagnitude(vectorBetween, 3) - dockingDist) / mathVecMagnitude(vectorBetween, 3);
+        for (int i = 0; i < 3; i++) {
+            vectorBetween[i] = vectorBetween[i] * mProportion;
+            vectorTarget[i] = vectorBetween[i] + myPos[i];
+            vectorBetween[i] = vectorBetween[i] / mProportion;
+        }
+        moveTo(vectorTarget);
+        pointToward(itemPos[targetitem]);
+        // go to next behavior once its close enough and facing right direction, and dock.
+        if(mathVecMagnitude(myVel, 3) < 0.01 && mathVecMagnitude(vectorBetween, 3) < dockingDist)
+        {
+            currentBehavior = 4;
+            game.dockItem();
+        }
+    }
+    if(currentBehavior == 4)
+    {
+        // we have the item, moving towards the assembly point.
+        moveTo(realAss);
+        pointToward(realAss);
 
-	case ASSEMBLY:
-		assemblyLoop();
-		break;
+        float vb[3];
+        mathVecSubtract(vb, realAss, myPos, 3);
+        // go to next behavior once we're at the assembly point, and drop the item.
+        if(mathVecMagnitude(vb, 3) < 0.03)
+        {
+            game.dropItem();
 
-	case STEAL:
+            // Switch back to behavior #3, so we can go pick up more items.
+            // Also, we need to choose a new item to pickup.
+            targetitem = chooseItemToPickup();
+            currentBehavior = 3;
+        }
+    }
+}
 
-		break;
+// which item should we go after?
+// todo: right now this just picks by item ID LOL we should make it smarter,
+// like picking the one with most points/time efficiency
+int chooseItemToPickup()
+{
+    int IDcount = 0;
+    while(game.hasItemBeenPickedUp(IDcount) && game.hasItem(IDcount) != 1) {
+        IDcount++;
+        if (IDcount > 5) {
+            IDcount = 0;
+            break;
+        }
+    }
+    return IDcount;
+}
 
-	case ENDGAME:
-
-		break;
-	}
+void moveTo(float point[3])
+{
+    // is there a better way to do this?
+    api.setPositionTarget(point);
 }
 
 void updateState()
 {
-	getSphereStates();
-
-	for (int i = 0; i < 6; ++i) {
-        game.getItemLoc(items[i], i);
+    // SPHERE States
+    api.getMyZRState(myState);
+    api.getOtherZRState(otherState);
+    for (int i = 0; i < 3; i++) {
+        myPos[i] = myState[i];
+        myVel[i] = myState[i + 3];
+        otherPos[i] = otherState[i];
     }
 
+    // Item Positions
+    for (int i = 0; i < 6; i++) {
+        float itemState[12];
+        game.getItemZRState(itemState, i);
+        for (int j = 0; j < 3; j++) {
+            itemPos[i][j] = itemState[j];
+        }
+    }
 }
 
-void getSphereStates()
+void pointToward(float target[3])
 {
-	api.getMyZRState(my_state);
-	api.getOtherZRState(other_state);
-}
-
-void moveTo(float target[])
-{
-
+    float vectorBetween[3];
+    mathVecSubtract(vectorBetween, target, myPos, 3);
+    mathVecNormalize(vectorBetween, 3);
+    api.setAttitudeTarget(vectorBetween);
 }
