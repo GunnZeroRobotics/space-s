@@ -31,7 +31,11 @@ void loop()
 
     // perform the behavior we are on
     // todo: we should go to the next behavior based on once we reach the point, instead of based on time
-    // todo: use a better SPS triangle.
+    // todo: use better SPS triangle coordinates
+    // todo: make the docking function faster, better, etc.
+    // todo: make the item placement in the center of assembly zone
+    // todo: make moving better, efficient.
+    // todo: make item target selection better.
     if(currentBehavior == 0)
     {
         // moving towards first SPS point
