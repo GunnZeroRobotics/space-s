@@ -31,7 +31,7 @@ void loop()
 
     if (game.getNumSPSHeld() == 2)
     {
-        if (closeTo(myPos, spsLoc[0], 0.03))
+        if (closeTo(myPos, spsLoc[0], 0.08))
         {
             game.dropSPS();
         }
@@ -42,7 +42,7 @@ void loop()
     }
     else if (game.getNumSPSHeld() == 1)
     {
-        if (closeTo(myPos, spsLoc[1], 0.03))
+        if (closeTo(myPos, spsLoc[1], 0.08))
         {
             game.dropSPS();
             float ass[4];
@@ -63,10 +63,10 @@ void loop()
         int IDcount = 1;
         while (game.hasItemBeenPickedUp(IDcount) && game.hasItem(IDcount) != 1)
         {
-            IDcount++;
-            if (IDcount > 5)
+            IDcount--;
+            if (IDcount < 0)
             {
-                IDcount = 0;
+                IDcount = 3;
                 break;
             }
         }
@@ -118,7 +118,8 @@ void pointToward(float target[3])
     api.setAttitudeTarget(vectorBetween);
 }
 
-bool isFacing(float target[3]) {
+bool isFacing(float target[3])
+{
     float targetAtt[3];
     mathVecSubtract(targetAtt, target, myPos, 3);
     mathVecNormalize(targetAtt, 3);
