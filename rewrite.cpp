@@ -19,7 +19,7 @@ void init()
     spsLoc[0][0] = -0.5;
     spsLoc[0][1] = 0.3;
     spsLoc[0][2] = 0;
-    spsLoc[1][0] = -0.4;
+    spsLoc[1][0] = -0.35;
     spsLoc[1][1] = -0.3;
     spsLoc[1][2] = -0.22;
 }
