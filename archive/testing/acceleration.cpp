@@ -1,4 +1,7 @@
 //
+// UPDATE: These acceleration values probably incorrect due to multiple factors
+// KEPT ONLY FOR REFERENCE
+//
 // Simulate with:
 // Satellite 1: X = 0, Y = 0, Z = -0.75, AttX = any, AttY = any, AttZ = any
 // Satellite 2: X = 0.75, Y = any, Z = any, AttX = any, AttY = any, AttZ = any

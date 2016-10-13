@@ -1,3 +1,11 @@
+// STRATEGY: block opponent from entering their assembly zone
+//
+// Currently a very basic implementation -- not very good
+//  -- Stays at midpoint between opponent position and assembly zone
+// 
+// Strategy is questionable due to the speed at which opponent can dock with
+// an item after placing their SPSs
+
 float myPos[3];
 float myVel[3];
 float myAtt[3];

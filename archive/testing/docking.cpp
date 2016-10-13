@@ -1,5 +1,9 @@
-// PROBABLY INCORRECT: const static float acc = 0.121; // meters/second
-const static int totalGameTime = 180; // seconds
+// UPDATE: Docking is functional (although with some errors), moving this to archive
+// KEPT ONLY FOR REFERENCE
+//
+// Simulate with:
+// Satellite 1: X = any, Y = any, Z = any, AttX = any, AttY = any, AttZ = any
+// Satellite 2: X = any, Y = any, Z = any, AttX = any, AttY = any, AttZ = any
 
 int gameTime;
 
