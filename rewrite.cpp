@@ -61,8 +61,9 @@ void loop()
     else
     {
         int IDcount = 1;
-        while (game.hasItemBeenPickedUp(IDcount) && game.hasItem(IDcount) != 1)
+        while (game.itemInZone(IDcount))
         {
+            if (game.hasItem(IDcount) == 1) {break;}
             IDcount--;
             if (IDcount < 0)
             {
