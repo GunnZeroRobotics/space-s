@@ -2,6 +2,8 @@ float myPos[3];
 float myVel[3];
 float myAtt[3];
 
+float oppPos[3];
+
 float itemPos[6][3];
 
 float assemblyZone[3];
@@ -10,8 +12,12 @@ float spsLoc[2][3];
 
 int moveCommand;
 
+float dockTroll;
+
 void init()
 {
+    game.dropSPS();
+    game.dropSPS();
     game.dropSPS();
 
     moveCommand = 0;
@@ -22,6 +28,8 @@ void init()
     spsLoc[1][0] = -0.4;
     spsLoc[1][1] = -0.3;
     spsLoc[1][2] = -0.22;
+    
+    dockTroll = 0.163;
 }
 
 void loop()
@@ -29,48 +37,11 @@ void loop()
     // Omitted satellite states, because I don't like them :)
     updateState();
 
-    if (game.getNumSPSHeld() == 2)
-    {
-        if (closeTo(myPos, spsLoc[0], 0.03))
-        {
-            game.dropSPS();
-        }
-        else
-        {
-            api.setPositionTarget(spsLoc[0]);
-        }
-    }
-    else if (game.getNumSPSHeld() == 1)
-    {
-        if (closeTo(myPos, spsLoc[1], 0.03))
-        {
-            game.dropSPS();
-            float ass[4];
-            game.getZone(ass);
-            for (int i = 0; i < 3; i++)
-            {
-                assemblyZone[i] = ass[i];
-            }
-        }
-        else
-        {
-            api.setPositionTarget(spsLoc[1]);
-            pointToward(itemPos[1]);
-        }
-    }
-    else
-    {
-        int IDcount = 1;
-        while (game.hasItemBeenPickedUp(IDcount) && game.hasItem(IDcount) != 1)
-        {
-            IDcount++;
-            if (IDcount > 5)
-            {
-                IDcount = 0;
-                break;
-            }
-        }
-        dock(IDcount);
+    if (!game.hasItemBeenPickedUp(0)) {
+        dock(0);
+    } else {
+        api.setPositionTarget(oppPos);  
+        pointToward(oppPos);     
     }
 }
 
@@ -88,14 +59,17 @@ void moveFast(float target[3]) {}
 void updateState()
 {
     float myState[12];
+    float oppState[12];
 
     // SPHERE States
     api.getMyZRState(myState);
+    api.getOtherZRState(oppState);
     for (int i = 0; i < 3; i++)
     {
         myPos[i] = myState[i];
         myVel[i] = myState[i + 3];
         myAtt[i] = myState[i + 6];
+        oppPos[i] = oppState[i];
     }
 
     // Item Positions
@@ -133,21 +107,6 @@ void dock(int itemID)
     float vectorTarget[3];
 
     float dockingDist = (itemID < 2) ? 0.162 : ((itemID < 4) ? 0.149 : 0.135);
-
-    // If you are holding the item, put it in your assembly zone
-    if (game.hasItem(itemID) == 1)
-    {
-        if (closeTo(myPos, assemblyZone, dockingDist))
-        {
-            game.dropItem();
-        }
-        else
-        {
-            api.setPositionTarget(assemblyZone);
-            pointToward(assemblyZone);
-        }
-        return;
-    }
 
     mathVecSubtract(vectorBetween, itemPos[itemID], myPos, 3);
     float scale = (mathVecMagnitude(vectorBetween, 3) - dockingDist) / mathVecMagnitude(vectorBetween, 3);

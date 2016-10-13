@@ -15,12 +15,12 @@ void init()
 {
     game.dropSPS();
 
-    spsLoc[0][0] = -0.7;
+    spsLoc[0][0] = -0.4;
     spsLoc[0][1] = 0.7;
-    spsLoc[0][2] = 0.7;
-    spsLoc[1][0] = -0.35;
-    spsLoc[1][1] = -0.3;
-    spsLoc[1][2] = -0.22;
+    spsLoc[0][2] = 0;
+    spsLoc[1][0] = 0.4;
+    spsLoc[1][1] = 0.7;
+    spsLoc[1][2] = 0;
 }
 
 void loop()
