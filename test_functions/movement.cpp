@@ -123,7 +123,7 @@ bool closeTo(float vec[3], float target[3], float threshold) {
 void moveFast(float target[3]) {
     float vectorBetween[3];
     mathVecSubtract(vectorBetween, target, myPos, 3);
-    if (mathVecMagnitude(vectorBetween, 3) < 0.4) {
+    if (mathVecMagnitude(vectorBetween, 3) < 0.2) {
         api.setPositionTarget(vectorBetween);
     } else {
         api.setVelocityTarget(vectorBetween);
@@ -186,4 +186,4 @@ void dock(int itemID)
     }
 }
 
-int optimalItem() {}
+int optimalItem() { return 0; }

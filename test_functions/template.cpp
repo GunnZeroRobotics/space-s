@@ -1,5 +1,10 @@
-// TEMPLATE FOR TESTING FILES
-// Duplicate this file and use it for any testing purposes
+// CURRENT VERSION:
+// Averages ~30 points per game without an opponent
+//
+// General TODOs:
+// Replace all setPositionTarget with moveFast once it is completed
+//
+// Function/line specific TODOs commented on their corresponding lines
 
 // myState variables
 float myPos[3];
@@ -31,7 +36,7 @@ void init()
     spsLoc[1][0] = -0.5;
     spsLoc[1][1] = 0.3;
     spsLoc[1][2] = 0;
-    spsLoc[2][0] = -0.36;
+    spsLoc[2][0] = -0.37;
     spsLoc[2][1] = -0.3;
     spsLoc[2][2] = -0.22;
 }
@@ -45,10 +50,11 @@ void loop()
         // Code for placing SPSs
         int spsHeld = game.getNumSPSHeld();
 
-        if (closeTo(myPos, spsLoc[3 - spsHeld], 0.08)) {
+        if (closeTo(myPos, spsLoc[3 - spsHeld], (spsHeld == 1) ? 0.03 : 0.08)) {
             // If close to sps location, drop SPS and update SPS position array
-            // Large threshold used (8 cm) because precision not needed and
+            // Large tolerance used (8 cm) because precision not needed and
             // takes too long to slow down
+            // Small tolerance used for last SPS because it is right next to an item
             game.dropSPS();
             for (int i = 0; i < 3; i++) { spsLoc[3 - spsHeld][i] = myPos[i]; }
             spsHeld--;
@@ -69,6 +75,9 @@ void loop()
         // Small items excluded due to lack of time (most likely)
         // If all large and medium items are already in our assembly zone, this 
         // enters an infinite loop. (Is that case possible???)
+        
+        // TODO: Replace item selection with optimalItem function once it is complete
+        // Note: optimalItem probably requires moveFast -- correct me if I am wrong
         int IDcount = 1;
         while (game.itemInZone(IDcount)) {
             if (game.hasItem(IDcount) == 1) {
@@ -112,12 +121,14 @@ void updateState()
     }
 }
 
-bool closeTo(float vec[3], float target[3], float threshold) {
+bool closeTo(float vec[3], float target[3], float tolerance) {
     float diff[3];
     mathVecSubtract(diff, vec, target, 3);
-    return mathVecMagnitude(diff, 3) < threshold;
+    return mathVecMagnitude(diff, 3) < tolerance;
 }
 
+// TODO: URGENT -- complete this function
+// Do testing in a separate file (either template.cpp or templateWithoutSPS.cpp)
 void moveFast(float target[3]) {}
 
 // Sets attitude toward a given point
@@ -128,14 +139,14 @@ void pointToward(float target[3]) {
     api.setAttitudeTarget(vectorBetween);
 }
 
-// Checks if SPHERE is facing a target point with threshold of 0.25 radians (14.3 degrees)
-bool isFacing(float target[3]) {
+// Checks if SPHERE is facing a target point with tolerance (in radians)
+bool isFacing(float target[3], float tolerance) {
     float targetAtt[3];
     mathVecSubtract(targetAtt, target, myPos, 3);
     mathVecNormalize(targetAtt, 3);
     float theta;
     theta = acosf(mathVecInner(targetAtt, myAtt, 3));
-    return theta < 14.3f;
+    return theta < tolerance;
 }
 
 void dock(int itemID)
@@ -145,11 +156,16 @@ void dock(int itemID)
     // If you are holding the item, put it in your assembly zone
     // Note: You do not have to stop/slow down to drop an item
     if (game.hasItem(itemID) == 1) {
-        if (closeTo(myPos, assemblyZone, dockingDist)) {
+        if (closeTo(myPos, assemblyZone, dockingDist) && isFacing(assemblyZone, (3.14 / 2.0))) {
             game.dropItem();
         }
         else {
-            api.setPositionTarget(assemblyZone);
+            // Set position to assemblyZone's position scaled down by dockingDist
+            float targetPos[3];
+            for (int i = 0; i < 3; i++) { 
+                targetPos[i] = assemblyZone[i] * ((mathVecMagnitude(assemblyZone, 3) - dockingDist) / mathVecMagnitude(assemblyZone, 3));
+            }
+            api.setPositionTarget(targetPos);
             pointToward(assemblyZone);
         }
     } else {
@@ -167,7 +183,9 @@ void dock(int itemID)
         }
             
         // Checks if SPHERE satisfies docking requirements -- if so, docks
-        if (mathVecMagnitude(myVel, 3) > 0.01 || mathVecMagnitude(vectorBetween, 3) > dockingDist || !isFacing(itemPos[itemID])) {
+        // Tolerance for docking is larger than 0.25 because we can point toward any of the 6 faces
+        // TODO: Make sure SPHERE is not too close to item before docking
+        if (mathVecMagnitude(myVel, 3) > 0.01 || mathVecMagnitude(vectorBetween, 3) > dockingDist || !isFacing(itemPos[itemID], 0.3)) {
             api.setPositionTarget(vectorTarget);
             pointToward(itemPos[itemID]);
         } else {
@@ -176,4 +194,7 @@ void dock(int itemID)
     }
 }
 
-int optimalItem() {}
+// TODO: Write this function.
+// Do testing in a separate file (use template.cpp)
+// Return the itemID of the best item to dock with
+int optimalItem() { return 0; }
