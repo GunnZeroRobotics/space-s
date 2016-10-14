@@ -65,16 +65,16 @@ void loop()
                 for (int i = 0; i < 3; i++) { assemblyZone[i] = ass[i]; }
             }
         } else {
-            api.setPositionTarget(spsLoc[3 - game.getNumSPSHeld()]);
+            moveFast(spsLoc[3 - game.getNumSPSHeld()]);
         }
     } else {
         // All SPSs are placed, docking and assembly code
         // Iterates through the items that are already in our assembly zone,
         // Docks with priority of large --> medium
         // Small items excluded due to lack of time (most likely)
-        // If all large and medium items are already in our assembly zone, this 
+        // If all large and medium items are already in our assembly zone, this
         // enters an infinite loop. (Is that case possible???)
-        
+
         // TODO: Replace item selection with optimalItem function once it is complete
         // Note: optimalItem probably requires moveFast -- correct me if I am wrong
         int IDcount = 1;
@@ -128,7 +128,9 @@ bool closeTo(float vec[3], float target[3], float threshold) {
 
 // TODO: URGENT -- complete this function
 // Do testing in a separate file (either template.cpp or templateWithoutSPS.cpp)
-void moveFast(float target[3]) {}
+void moveFast(float target[3]) {
+    api.setPositionTarget(target);
+}
 
 // Sets attitude toward a given point
 void pointToward(float target[3]) {
@@ -160,7 +162,7 @@ void dock(int itemID)
             game.dropItem();
         }
         else {
-            api.setPositionTarget(assemblyZone);
+            moveFast(assemblyZone);
             pointToward(assemblyZone);
         }
     } else {
@@ -168,7 +170,7 @@ void dock(int itemID)
         float vectorTarget[3]; // Coordinates of target location to move to
 
         mathVecSubtract(vectorBetween, itemPos[itemID], myPos, 3);
- 
+
         // Scale vectorTarget to the right length based on the docking distance
         float scale = (mathVecMagnitude(vectorBetween, 3) - dockingDist) / mathVecMagnitude(vectorBetween, 3);
         for (int i = 0; i < 3; i++) {
@@ -176,11 +178,11 @@ void dock(int itemID)
             vectorTarget[i] = vectorBetween[i] + myPos[i];
             vectorBetween[i] = vectorBetween[i] / scale;
         }
-            
+
         // Checks if SPHERE satisfies docking requirements -- if so, docks
         // TODO: Make sure SPHERE is not too close to item before docking
         if (mathVecMagnitude(myVel, 3) > 0.01 || mathVecMagnitude(vectorBetween, 3) > dockingDist || !isFacing(itemPos[itemID])) {
-            api.setPositionTarget(vectorTarget);
+            moveFast(vectorTarget);
             pointToward(itemPos[itemID]);
         } else {
             game.dockItem(itemID);
