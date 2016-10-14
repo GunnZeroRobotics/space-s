@@ -65,7 +65,7 @@ void loop()
                 for (int i = 0; i < 3; i++) { assemblyZone[i] = ass[i]; }
             }
         } else {
-            api.setPositionTarget(spsLoc[3 - game.getNumSPSHeld()]);
+            api.setPositionTarget(spsLoc[3 - spsHeld]);
         }
     } else {
         // All SPSs are placed, docking and assembly code

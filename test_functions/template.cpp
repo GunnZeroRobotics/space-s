@@ -17,7 +17,7 @@ float itemPos[6][3]; // itemPos[itemID][x/y/z coordinate]
 
 float assemblyZone[3]; // x, y, z coordinates of assembly zone
 
-float spsLoc[2][3]; // spsLoc[sps drop number][x/y/z coordinate]
+float spsLoc[3][3]; // spsLoc[sps drop number][x/y/z coordinate]
 
 void init()
 {
@@ -60,7 +60,7 @@ void loop()
                 for (int i = 0; i < 3; i++) { assemblyZone[i] = ass[i]; }
             }
         } else {
-            api.setPositionTarget(spsLoc[3 - game.getNumSPSHeld()]);
+            api.setPositionTarget(spsLoc[3 - spsHeld]);
         }
     } else {
         // All SPSs are placed, docking and assembly code
