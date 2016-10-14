@@ -129,7 +129,23 @@ bool closeTo(float vec[3], float target[3], float threshold) {
 // TODO: URGENT -- complete this function
 // Do testing in a separate file (either template.cpp or templateWithoutSPS.cpp)
 void moveFast(float target[3]) {
-    api.setPositionTarget(target);
+    // api.setPositionTarget(target);
+    float dist;
+    float temp[3];
+    int n;
+
+    mathVecSubtract(temp, target, myPos, 3);
+    dist = mathVecNormalize(temp, 3);
+
+    if (dist > 0.5 * 0.01 * 36 + mathVecMagnitude(myPos + 3, 3) * 6) {
+        for (n = 0; n < 3; n++) { //scale velocity (disp) to speed
+            temp[n] *= dist;
+        }
+        api.setVelocityTarget(temp);
+    }
+    else {
+        api.setPositionTarget(target);
+    }
 }
 
 // Sets attitude toward a given point
