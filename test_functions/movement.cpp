@@ -1,3 +1,12 @@
+// TODO: Create a faster version of moving than setPositionTarget
+//       using either setVelocity or setForce
+//
+// Last update:
+// Could not develop a significantly faster version
+// Ran into many problems, someone should revise/rewrite the code
+// Feel free to delete anything/everything, currently does not work well
+//  - Kevin Li
+
 float myPos[3];
 float myVel[3];
 float myAtt[3];
