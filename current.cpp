@@ -183,7 +183,7 @@ void dock(int itemID)
             api.setPositionTarget(vectorTarget);
             pointToward(itemPos[itemID]);
         } else {
-            game.dockItem();
+            game.dockItem(itemID);
         }
     }
 }
