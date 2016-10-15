@@ -20,8 +20,6 @@ float spsLoc[3][3]; // spsLoc[sps drop number][x/y/z coordinate]
 
 void init()
 {
-    game.dropSPS(); // drop SPS at spawn point
-
     // Set SPS locations
     // If there's a more consise way to set these please let me know - Kevin Li
     spsLoc[0][0] = 0.15;
@@ -30,7 +28,7 @@ void init()
     spsLoc[1][0] = -0.5;
     spsLoc[1][1] = 0.3;
     spsLoc[1][2] = 0;
-    spsLoc[2][0] = -0.38;
+    spsLoc[2][0] = -0.39;
     spsLoc[2][1] = -0.23;
     spsLoc[2][2] = -0.23;
 }
@@ -76,6 +74,7 @@ bool closeTo(float vec[3], float target[3], float tolerance) {
 }
 
 // TODO: URGENT -- complete this function
+// TODO: ALSO WHOEVER WROTE THIS PLEASE ADD MORE COMMENTS PLEASE PLEASE PLEASE 
 // Do testing in a separate file (either template.cpp or templateWithoutSPS.cpp)
 // It looks like there's progress here but this is still very inconsistent
 // Changed all moveFasts back to api.setPositionTarget - Kevin Li

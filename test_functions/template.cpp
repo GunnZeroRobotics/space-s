@@ -30,7 +30,7 @@ void init()
     spsLoc[1][0] = -0.5;
     spsLoc[1][1] = 0.3;
     spsLoc[1][2] = 0;
-    spsLoc[2][0] = -0.38;
+    spsLoc[2][0] = -0.39;
     spsLoc[2][1] = -0.23;
     spsLoc[2][2] = -0.23;
 }
@@ -67,7 +67,7 @@ void loop()
                 }
             }
         } else {
-            api.setPositionTarget(spsLoc[3 - game.getNumSPSHeld()]);
+            moveFast(spsLoc[3 - game.getNumSPSHeld()]);
         }
     } else {
         // All SPSs are placed, docking and assembly code
@@ -129,6 +129,7 @@ bool closeTo(float vec[3], float target[3], float tolerance) {
 }
 
 // TODO: URGENT -- complete this function
+// TODO: ALSO WHOEVER WROTE THIS PLEASE ADD MORE COMMENTS PLEASE PLEASE PLEASE 
 // Do testing in a separate file (either template.cpp or templateWithoutSPS.cpp)
 // It looks like there's progress here but this is still very inconsistent
 // Changed all moveFasts back to api.setPositionTarget - Kevin Li
