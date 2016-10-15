@@ -77,7 +77,27 @@ bool closeTo(float vec[3], float target[3], float tolerance) {
 
 // TODO: URGENT -- complete this function
 // Do testing in a separate file (either template.cpp or templateWithoutSPS.cpp)
-void moveFast(float target[3]) {}
+// It looks like there's progress here but this is still very inconsistent
+// Changed all moveFasts back to api.setPositionTarget - Kevin Li
+void moveFast(float target[3]) {
+    // api.setPositionTarget(target);
+    float dist;
+    float temp[3];
+    int n;
+
+    mathVecSubtract(temp, target, myPos, 3);
+    dist = mathVecNormalize(temp, 3);
+
+    if (dist > 0.5 * 0.01 * 36 + mathVecMagnitude(myPos + 3, 3) * 6) {
+        for (n = 0; n < 3; n++) { //scale velocity (disp) to speed
+            temp[n] *= dist;
+        }
+        api.setVelocityTarget(temp);
+    }
+    else {
+        api.setPositionTarget(target);
+    }
+}
 
 // Sets attitude toward a given point
 void pointToward(float target[3]) {
@@ -123,7 +143,7 @@ void dock(int itemID)
         float vectorTarget[3]; // Coordinates of target location to move to
 
         mathVecSubtract(vectorBetween, itemPos[itemID], myPos, 3);
- 
+
         // Scale vectorTarget to the right length based on the docking distance
         float scale = (mathVecMagnitude(vectorBetween, 3) - minDockingDist) / mathVecMagnitude(vectorBetween, 3);
         for (int i = 0; i < 3; i++) { vectorTarget[i] = (vectorBetween[i] * scale) + myPos[i]; }
