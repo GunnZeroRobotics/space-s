@@ -24,21 +24,25 @@ float assemblyZone[3]; // x, y, z coordinates of assembly zone
 
 float spsLoc[3][3]; // spsLoc[sps drop number][x/y/z coordinate]
 
+int rB; //modifies SPS locations based on our starting position
+
 void init()
 {
     game.dropSPS(); // drop SPS at spawn point
 
     // Set SPS locations
     // If there's a more consise way to set these please let me know - Kevin Li
-    spsLoc[0][0] = 0.15;
+    updateState();
+    rB = (myPos[1] < 0) ? -1 : 1;
+    spsLoc[0][0] = 0.15 * rB;
     spsLoc[0][1] = 0;
     spsLoc[0][2] = 0;
-    spsLoc[1][0] = -0.5;
-    spsLoc[1][1] = 0.3;
+    spsLoc[1][0] = -0.5 * rB;
+    spsLoc[1][1] = 0.3 * rB;
     spsLoc[1][2] = 0;
-    spsLoc[2][0] = -0.39;
-    spsLoc[2][1] = -0.23;
-    spsLoc[2][2] = -0.23;
+    spsLoc[2][0] = -0.39 * rB;
+    spsLoc[2][1] = -0.23 * rB;
+    spsLoc[2][2] = -0.23 * rB;
 }
 
 void loop()
@@ -64,7 +68,7 @@ void loop()
                 float ass[4];
                 game.getZone(ass);
                 for (int i = 0; i < 3; i++) { assemblyZone[i] = ass[i]; }
-                
+
                 // If requirements of docking are satisfied, immediately dock (saves 1 second)
                 float vectorBetween[3];
                 mathVecSubtract(vectorBetween, itemPos[1], myPos, 3);
@@ -134,7 +138,7 @@ bool closeTo(float vec[3], float target[3], float tolerance) {
     return mathVecMagnitude(diff, 3) < tolerance;
 }
 
-// TODO: WHOEVER WROTE THIS PLEASE ADD MORE COMMENTS PLEASE PLEASE PLEASE 
+// TODO: WHOEVER WROTE THIS PLEASE ADD MORE COMMENTS PLEASE PLEASE PLEASE
 void moveFast(float target[3]) {
     // api.setPositionTarget(target);
     float dist;
@@ -191,7 +195,7 @@ void dock(int itemID)
             // Set position to assemblyZone's position scaled down by dockingDist
             mathVecSubtract(vectorBetween, assemblyZone, myPos, 3);
             float targetPos[3];
-            for (int i = 0; i < 3; i++) { 
+            for (int i = 0; i < 3; i++) {
                 targetPos[i] = vectorBetween[i] * ((mathVecMagnitude(vectorBetween, 3) - minDockingDist) / mathVecMagnitude(vectorBetween, 3));
                 targetPos[i] += myPos[i];
             }
@@ -206,7 +210,7 @@ void dock(int itemID)
         // Scale vectorTarget to the right length based on the docking distance
         float scale = (mathVecMagnitude(vectorBetween, 3) - minDockingDist) / mathVecMagnitude(vectorBetween, 3);
         for (int i = 0; i < 3; i++) { vectorTarget[i] = (vectorBetween[i] * scale) + myPos[i]; }
-            
+
         // Checks if SPHERE satisfies docking requirements -- if so, docks
         // TODO: Check if we can use a tolerance > 0.25 because we can point at any of the 6 faces
         // TODO: Why are there still docking penalties??????? (although relatively rare)
