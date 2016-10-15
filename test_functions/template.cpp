@@ -1,10 +1,4 @@
-// CURRENT VERSION:
-// Averages ~30 points per game without an opponent
-//
-// General TODOs:
-// Replace all setPositionTarget with moveFast once it is completed
-//
-// Function/line specific TODOs commented on their corresponding lines
+// DUPLICATE THIS FILE FOR TESTING
 
 // myState variables
 float myPos[3];
@@ -36,9 +30,9 @@ void init()
     spsLoc[1][0] = -0.5;
     spsLoc[1][1] = 0.3;
     spsLoc[1][2] = 0;
-    spsLoc[2][0] = -0.37;
-    spsLoc[2][1] = -0.3;
-    spsLoc[2][2] = -0.22;
+    spsLoc[2][0] = -0.38;
+    spsLoc[2][1] = -0.23;
+    spsLoc[2][2] = -0.23;
 }
 
 void loop()
@@ -50,7 +44,7 @@ void loop()
         // Code for placing SPSs
         int spsHeld = game.getNumSPSHeld();
 
-        if (closeTo(myPos, spsLoc[3 - spsHeld], (spsHeld == 1) ? 0.03 : 0.08)) {
+        if (closeTo(myPos, spsLoc[3 - spsHeld], (spsHeld == 1) ? 0.01 : 0.08)) {
             // If close to sps location, drop SPS and update SPS position array
             // Large tolerance used (8 cm) because precision not needed and
             // takes too long to slow down
@@ -64,6 +58,13 @@ void loop()
                 float ass[4];
                 game.getZone(ass);
                 for (int i = 0; i < 3; i++) { assemblyZone[i] = ass[i]; }
+                
+                // NEEDS FURTHER TESTING: Instantly dock with the first item because requirements are satsified
+                float vectorBetween[3];
+                mathVecSubtract(vectorBetween, itemPos[1], myPos, 3);
+                if (mathVecMagnitude(myVel, 3) < 0.01 || mathVecMagnitude(vectorBetween, 3) < 0.173 || !isFacing(itemPos[1], 0.25) || mathVecMagnitude(vectorBetween, 3) > 0.151) {
+                    game.dockItem(1);
+                }
             }
         } else {
             api.setPositionTarget(spsLoc[3 - spsHeld]);
@@ -151,19 +152,21 @@ bool isFacing(float target[3], float tolerance) {
 
 void dock(int itemID)
 {
-    float dockingDist = (itemID < 2) ? 0.154 : ((itemID < 4) ? 0.142 : 0.128);
+    float minDockingDist = (itemID < 2) ? 0.151 : ((itemID < 4) ? 0.138 : 0.124);
+    float maxDockingDist = (itemID < 2) ? 0.173 : ((itemID < 4) ? 0.160 : 0.146);
+    float avgDockingDist = (minDockingDist + maxDockingDist) / 2;
 
     // If you are holding the item, put it in your assembly zone
     // Note: You do not have to stop/slow down to drop an item
     if (game.hasItem(itemID) == 1) {
-        if (closeTo(myPos, assemblyZone, dockingDist) && isFacing(assemblyZone, (3.14 / 2.0))) {
+        if (closeTo(myPos, assemblyZone, avgDockingDist) && isFacing(assemblyZone, (3.14 / 6.0))) {
             game.dropItem();
         }
         else {
             // Set position to assemblyZone's position scaled down by dockingDist
             float targetPos[3];
             for (int i = 0; i < 3; i++) { 
-                targetPos[i] = assemblyZone[i] * ((mathVecMagnitude(assemblyZone, 3) - dockingDist) / mathVecMagnitude(assemblyZone, 3));
+                targetPos[i] = assemblyZone[i] * ((mathVecMagnitude(assemblyZone, 3) - minDockingDist) / mathVecMagnitude(assemblyZone, 3));
             }
             api.setPositionTarget(targetPos);
             pointToward(assemblyZone);
@@ -175,17 +178,13 @@ void dock(int itemID)
         mathVecSubtract(vectorBetween, itemPos[itemID], myPos, 3);
  
         // Scale vectorTarget to the right length based on the docking distance
-        float scale = (mathVecMagnitude(vectorBetween, 3) - dockingDist) / mathVecMagnitude(vectorBetween, 3);
-        for (int i = 0; i < 3; i++) {
-            vectorBetween[i] = vectorBetween[i] * scale;
-            vectorTarget[i] = vectorBetween[i] + myPos[i];
-            vectorBetween[i] = vectorBetween[i] / scale;
-        }
+        float scale = (mathVecMagnitude(vectorBetween, 3) - minDockingDist) / mathVecMagnitude(vectorBetween, 3);
+        for (int i = 0; i < 3; i++) { vectorTarget[i] = (vectorBetween[i] * scale) + myPos[i]; }
             
         // Checks if SPHERE satisfies docking requirements -- if so, docks
-        // Tolerance for docking is larger than 0.25 because we can point toward any of the 6 faces
-        // TODO: Make sure SPHERE is not too close to item before docking
-        if (mathVecMagnitude(myVel, 3) > 0.01 || mathVecMagnitude(vectorBetween, 3) > dockingDist || !isFacing(itemPos[itemID], 0.3)) {
+        // TODO: Check if we can use a tolerance > 0.25 because we can point at any of the 6 faces
+        // TODO: Why are there still docking penalties??????? (although relatively rare)
+        if (mathVecMagnitude(myVel, 3) > 0.01 || mathVecMagnitude(vectorBetween, 3) > maxDockingDist || !isFacing(itemPos[itemID], 0.25) || mathVecMagnitude(vectorBetween, 3) < minDockingDist) {
             api.setPositionTarget(vectorTarget);
             pointToward(itemPos[itemID]);
         } else {
@@ -197,4 +196,5 @@ void dock(int itemID)
 // TODO: Write this function.
 // Do testing in a separate file (use template.cpp)
 // Return the itemID of the best item to dock with
+// I think this requires moveFast to be completed -- Kevin Li
 int optimalItem() { return 0; }
