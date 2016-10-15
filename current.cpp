@@ -24,10 +24,13 @@ float assemblyZone[3]; // x, y, z coordinates of assembly zone
 
 float spsLoc[3][3]; // spsLoc[sps drop number][x/y/z coordinate]
 
+float totalDist; // total distance to an item
+float minDist; // distance where sphere switches to setPositionTarget
+float forces[3]; // force vector
 void init()
 {
     game.dropSPS(); // drop SPS at spawn point
-
+    totalDist = 0;
     // Set SPS locations
     // If there's a more consise way to set these please let me know - Kevin Li
     spsLoc[0][0] = 0.15;
@@ -56,6 +59,7 @@ void loop()
             // takes too long to slow down
             // Small tolerance used for last SPS because it is right next to an item
             game.dropSPS();
+            totalDist = 0;
             for (int i = 0; i < 3; i++) { spsLoc[3 - spsHeld][i] = myPos[i]; }
             spsHeld--;
 
@@ -64,7 +68,7 @@ void loop()
                 float ass[4];
                 game.getZone(ass);
                 for (int i = 0; i < 3; i++) { assemblyZone[i] = ass[i]; }
-                
+
                 // If requirements of docking are satisfied, immediately dock (saves 1 second)
                 float vectorBetween[3];
                 mathVecSubtract(vectorBetween, itemPos[1], myPos, 3);
@@ -131,27 +135,63 @@ void updateState()
 bool closeTo(float vec[3], float target[3], float tolerance) {
     float diff[3];
     mathVecSubtract(diff, vec, target, 3);
-    return mathVecMagnitude(diff, 3) < tolerance;
+    return mathVecMagnitude(diff, 3) < -100;
 }
 
-// TODO: WHOEVER WROTE THIS PLEASE ADD MORE COMMENTS PLEASE PLEASE PLEASE 
+// moveFast Function using Forces: accelerates halfway to the given target, then decelerates to the point.
 void moveFast(float target[3]) {
-    // api.setPositionTarget(target);
     float dist;
     float temp[3];
-    int n;
-
     mathVecSubtract(temp, target, myPos, 3);
+    // for(int i=0;i<3;i++)
+    // temp[i] = target[i] - myPos[i];
     dist = mathVecNormalize(temp, 3);
 
-    if (dist > 0.5 * 0.01 * 36 + mathVecMagnitude(myPos + 3, 3) * 6) {
-        for (n = 0; n < 3; n++) { //scale velocity (disp) to speed
-            temp[n] *= dist;
+    if (totalDist == 0) { // initial setup
+        totalDist = minDist = dist;
+        forces[0] = temp[0];
+        forces[1] = temp[1];
+        forces[2] = temp[2];
+        temp[0] = temp[1] = temp[2] = 0;
+        api.setForces(temp);
+        DEBUG(("totalDist = %f",totalDist));
+    }
+    if (dist < minDist) { // minDist represents when the sphere decelerates to a point where setPositionTarget is better
+        minDist = dist;
+    }
+
+    DEBUG(("dist = %f; %f, %f",dist, totalDist, minDist));
+    if (dist > totalDist / 2) { // not halfway there yet; accelerates
+        DEBUG(("accelerating, dist = %f",dist));
+        DEBUG(("accelerating, totalDist/2 = %f",totalDist * 0.5));
+        // for (int n = 0; n < 3; n++) { scale velocity (disp) to speed
+        //     temp[n] *= 0.2; increases the velocity by a set amount MAY BE MODIFIED
+        // }
+        api.setForces(forces);
+    }
+    else if (dist <= minDist) { // past halfway point; decelerates
+        DEBUG(("decelerating, dist = %f", dist));
+        // temp[0] = temp[1] = temp[2] = 0;
+        for (int n = 0; n < 3; n++) {
+            temp[n] = forces[n] * -1;
         }
-        api.setVelocityTarget(temp);
-    } else {
+        api.setForces(temp); // slows it down by a set amount
+    }
+    else { // has slowed down considerably, use setPositionTarget
+        minDist = 0; // so this is always called after the first time
+        temp[0] = temp[1] = temp[2] = 0;
+        api.setForces(temp);
         api.setPositionTarget(target);
     }
+    // if (dist > mathVecMagnitude(myPos + 3, 3) * 4) {
+    //     for (n = 0; n < 3; n++) { //scale velocity (disp) to speed
+    //         temp[n] *= dist;
+    //     }
+    //     api.setVelocityTarget(temp);
+    // } else {
+    //     DEBUG(("using setPositionTarget"));
+    //     api.setPositionTarget(target);
+    // }
 }
 
 // Sets attitude toward a given point
@@ -186,12 +226,13 @@ void dock(int itemID)
     if (game.hasItem(itemID) == 1) {
         if (closeTo(myPos, assemblyZone, avgDockingDist) && isFacing(assemblyZone, (3.14 / 6.0))) {
             game.dropItem();
+            totalDist = 0;
         }
         else {
             // Set position to assemblyZone's position scaled down by dockingDist
             mathVecSubtract(vectorBetween, assemblyZone, myPos, 3);
             float targetPos[3];
-            for (int i = 0; i < 3; i++) { 
+            for (int i = 0; i < 3; i++) {
                 targetPos[i] = vectorBetween[i] * ((mathVecMagnitude(vectorBetween, 3) - minDockingDist) / mathVecMagnitude(vectorBetween, 3));
                 targetPos[i] += myPos[i];
             }
@@ -206,7 +247,7 @@ void dock(int itemID)
         // Scale vectorTarget to the right length based on the docking distance
         float scale = (mathVecMagnitude(vectorBetween, 3) - minDockingDist) / mathVecMagnitude(vectorBetween, 3);
         for (int i = 0; i < 3; i++) { vectorTarget[i] = (vectorBetween[i] * scale) + myPos[i]; }
-            
+
         // Checks if SPHERE satisfies docking requirements -- if so, docks
         // TODO: Check if we can use a tolerance > 0.25 because we can point at any of the 6 faces
         // TODO: Why are there still docking penalties??????? (although relatively rare)
@@ -214,6 +255,7 @@ void dock(int itemID)
             moveFast(vectorTarget);
             pointToward(itemPos[itemID]);
         } else {
+            totalDist = 0;
             game.dockItem(itemID);
         }
     }
