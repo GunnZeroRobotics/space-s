@@ -40,50 +40,7 @@ void init()
 
 void loop()
 {
-    // Updates state arrays of SPHEREs and items
     updateState();
-
-    if (game.getNumSPSHeld() != 0) {
-        // Code for placing SPSs
-        int spsHeld = game.getNumSPSHeld();
-
-        if (closeTo(myPos, spsLoc[3 - spsHeld], 0.08)) {
-            // If close to sps location, drop SPS and update SPS position array
-            // Large threshold used (8 cm) because precision not needed and
-            // takes too long to slow down
-            game.dropSPS();
-            for (int i = 0; i < 3; i++) { spsLoc[3 - spsHeld][i] = myPos[i]; }
-            spsHeld--;
-
-            if (spsHeld == 0) {
-                // Save assembly zone location if no SPSs left
-                float ass[4];
-                game.getZone(ass);
-                for (int i = 0; i < 3; i++) { assemblyZone[i] = ass[i]; }
-            }
-        } else {
-            moveFast(spsLoc[3 - spsHeld]);
-        }
-    } else {
-        // All SPSs are placed, docking and assembly code
-        // Iterates through the items that are already in our assembly zone,
-        // Docks with priority of large --> medium
-        // Small items excluded due to lack of time (most likely)
-        // If all large and medium items are already in our assembly zone, this 
-        // enters an infinite loop. (Is that case possible???)
-        int IDcount = 1;
-        while (game.itemInZone(IDcount)) {
-            if (game.hasItem(IDcount) == 1) {
-                break;
-            }
-            IDcount--;
-            if (IDcount < 0) {
-                IDcount = 3;
-            }
-        }
-
-        dock(IDcount);
-    }
 }
 
 // MARK: Helper Methods
