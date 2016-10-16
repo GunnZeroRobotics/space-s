@@ -176,7 +176,7 @@ void dock(int itemID)
     if (game.hasItem(itemID) == 1) {
         if (closeTo(myPos, assemblyZone, avgDockingDist) && isFacing(assemblyZone, (3.14 / 6.0))) {
             game.dropItem();
-            itemHeld = 0;
+            itemHeld = 0; //updates itemHeld state
         }
         else {
             // Set position to assemblyZone's position scaled down by dockingDist
@@ -206,7 +206,7 @@ void dock(int itemID)
             pointToward(itemPos[itemID]);
         } else {
             game.dockItem(itemID);
-            itemHeld = 1;
+            itemHeld = 1; //updates itemHeld state
         }
     }
 }
