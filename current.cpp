@@ -148,50 +148,45 @@ void moveFast(float target[3]) {
     dist = mathVecNormalize(temp, 3);
 
     if (totalDist == 0) { // initial setup
+        // sets the totalDist to the dist found above = Total Distance needed to travel
+        // sets minDist = dist – minDist is the minimum distance to the point the sphere has reached
         totalDist = minDist = dist;
+        // set the force vector
         forces[0] = temp[0];
         forces[1] = temp[1];
         forces[2] = temp[2];
+        // reset forces
         temp[0] = temp[1] = temp[2] = 0;
         api.setForces(temp);
         DEBUG(("totalDist = %f",totalDist));
     }
-    if (dist < minDist) { // minDist represents when the sphere decelerates to a point where setPositionTarget is better
+    // minDist represents when the sphere decelerates to a point where setPositionTarget is better
+    if (dist < minDist) {
         minDist = dist;
     }
 
     DEBUG(("dist = %f; %f, %f",dist, totalDist, minDist));
     if (dist > totalDist / 2) { // not halfway there yet; accelerates
         DEBUG(("accelerating, dist = %f",dist));
-        DEBUG(("accelerating, totalDist/2 = %f",totalDist * 0.5));
-        // for (int n = 0; n < 3; n++) { scale velocity (disp) to speed
-        //     temp[n] *= 0.2; increases the velocity by a set amount MAY BE MODIFIED
-        // }
+        DEBUG(("accelerating, totalDist/2 = %f",totalDist / 2)); // halfway point, decelerates when distance < totalDist/2
         api.setForces(forces);
     }
     else if (dist <= minDist) { // past halfway point; decelerates
         DEBUG(("decelerating, dist = %f", dist));
-        // temp[0] = temp[1] = temp[2] = 0;
+        // make the force vector point in the opposite direciton
         for (int n = 0; n < 3; n++) {
             temp[n] = forces[n] * -1;
         }
         api.setForces(temp); // slows it down by a set amount
     }
-    else { // has slowed down considerably, use setPositionTarget
-        minDist = 0; // so this is always called after the first time
+    /* when dist is > minDist, that means the sphere has started to move backwards a bit.
+    Sphere has slowed down considerably, use setPositionTarget */
+    else {
+        minDist = 0; // so this else statement is always called after the first time
         temp[0] = temp[1] = temp[2] = 0;
         api.setForces(temp);
         api.setPositionTarget(target);
     }
-    // if (dist > mathVecMagnitude(myPos + 3, 3) * 4) {
-    //     for (n = 0; n < 3; n++) { //scale velocity (disp) to speed
-    //         temp[n] *= dist;
-    //     }
-    //     api.setVelocityTarget(temp);
-    // } else {
-    //     DEBUG(("using setPositionTarget"));
-    //     api.setPositionTarget(target);
-    // }
 }
 
 // Sets attitude toward a given point
