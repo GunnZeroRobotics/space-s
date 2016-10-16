@@ -1,7 +1,7 @@
-// TODO: Create a faster version of moving than setPositionTarget
-//       using either setVelocity or setForce
-//
-// Last update:
+// Temporary values that are relatively accurate
+float accMax;
+float mass;
+float fMax;
 
 // myState variables
 float myPos[3];
@@ -36,11 +36,28 @@ void init()
     spsLoc[2][0] = -0.36;
     spsLoc[2][1] = -0.3;
     spsLoc[2][2] = -0.22;
+
+    // Temporary values that are relatively accurate
+    mass = 4.65; // 4.64968
+    accMax = 0.008476;
+    fMax = 0.4; // 0.039411 
 }
 
 void loop()
 {
     updateState();
+
+    // Mass testing code
+    // float vTarget[3] = {0.02, 0, 0};
+    // float fTarget[3] = {0, 10, 0};
+    // if (api.getTime() > 20) {
+    //     api.setForces(fTarget);
+    // } else {
+    //     api.setVelocityTarget(vTarget);
+    // }
+
+    float targ[3] = {0.75, 0.75, 0.75};
+    moveFast(targ);
 }
 
 // MARK: Helper Methods
@@ -78,12 +95,24 @@ bool closeTo(float vec[3], float target[3], float threshold) {
 }
 
 void moveFast(float target[3]) {
+    // Currently assuming zero velocity perpendicular to vectorBetween
     float vectorBetween[3];
     mathVecSubtract(vectorBetween, target, myPos, 3);
-    if (mathVecMagnitude(vectorBetween, 3) < 0.2) {
-        api.setPositionTarget(vectorBetween);
+    float dist = mathVecMagnitude(vectorBetween, 3);
+    float velocityMag = mathVecMagnitude(myVel, 3);
+
+    if (dist < 0.08) {
+        api.setPositionTarget(target);
     } else {
-        api.setVelocityTarget(vectorBetween);
+        if (dist < ((velocityMag * velocityMag) / (2 * accMax * 0.95))) {
+            float negForces[3];
+            for (int i = 0; i < 3; i++) { negForces[i] = vectorBetween[i] * -1 * fMax; }
+            api.setForces(negForces);
+        } else {
+            float forces[3];
+            for (int i = 0; i < 3; i++) { forces[i] = vectorBetween[i] * fMax; }
+            api.setForces(forces);
+        }
     }
 }
 
