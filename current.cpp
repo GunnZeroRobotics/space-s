@@ -138,7 +138,7 @@ bool closeTo(float vec[3], float target[3], float tolerance) {
     return mathVecMagnitude(diff, 3) < tolerance;
 }
 
-// TODO: WHOEVER WROTE THIS PLEASE ADD MORE COMMENTS PLEASE PLEASE PLEASE
+// Checks if SPHERES is ____ away from target location -- if so, use setVelocity, else, use setPosition
 void moveFast(float target[3]) {
     // api.setPositionTarget(target);
     float dist;
@@ -147,7 +147,9 @@ void moveFast(float target[3]) {
 
     mathVecSubtract(temp, target, myPos, 3);
     dist = mathVecNormalize(temp, 3);
-
+    
+    // Not sure who changed values inside of if statment & added for loop - Larry
+    // TODO: WHOEVER WROTE THIS PLEASE ADD MORE COMMENTS PLEASE PLEASE PLEASE
     if (dist > 0.5 * 0.01 * 36 + mathVecMagnitude(myPos + 3, 3) * 6) {
         for (n = 0; n < 3; n++) { //scale velocity (disp) to speed
             temp[n] *= dist;
