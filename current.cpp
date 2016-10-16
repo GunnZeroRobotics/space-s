@@ -140,11 +140,9 @@ bool closeTo(float vec[3], float target[3], float tolerance) {
 
 // moveFast Function using Forces: accelerates halfway to the given target, then decelerates to the point.
 void moveFast(float target[3]) {
-    float dist;
-    float temp[3];
+    float dist; // current distance from target
+    float temp[3]; // temp vector for calculations setting forces
     mathVecSubtract(temp, target, myPos, 3);
-    // for(int i=0;i<3;i++)
-    // temp[i] = target[i] - myPos[i];
     dist = mathVecNormalize(temp, 3);
 
     if (totalDist == 0) { // initial setup
@@ -155,7 +153,7 @@ void moveFast(float target[3]) {
         forces[0] = temp[0];
         forces[1] = temp[1];
         forces[2] = temp[2];
-        // reset forces
+        // reset forces – doesnt rlly work, if theres another way let me (@myh1000) know or just comment this out if we're using the circumscribe method.
         temp[0] = temp[1] = temp[2] = 0;
         api.setForces(temp);
         DEBUG(("totalDist = %f",totalDist));
@@ -183,6 +181,7 @@ void moveFast(float target[3]) {
     Sphere has slowed down considerably, use setPositionTarget */
     else {
         minDist = 0; // so this else statement is always called after the first time
+        // might be unnecessary if setPositionTarget overrides any forces
         temp[0] = temp[1] = temp[2] = 0;
         api.setForces(temp);
         api.setPositionTarget(target);
