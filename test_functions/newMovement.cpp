@@ -160,7 +160,10 @@ void moveFast(float target[3]) {
         // Since we have 60 seconds of fuel and game is 180 seconds long, assume that we will
         // always be accelerating and at a value of max acceleration divided by 3
         float forcePerpendicularMagnitude = -1 * mass * vParallelMag * vPerpendicularMag * dist / 2;
-        float forceParallelMagnitude = sqrtf((accMax/3) * (accMax/3) - (forcePerpendicularMagnitude / mass)) * mass;
+        float forceParallelMagnitude = sqrtf((fMax/3) * (fMax/3) - forcePerpendicularMagnitude * forcePerpendicularMagnitude);
+        if (dist < ((velocityMag * velocityMag) / (2 * accMax * 0.95))) {
+            forceParallelMagnitude *= -1;
+        }
         // float forceParallelMagnitude = -1 * vParallelMag * vParallelMag / (2 * dist * mass);
 
         // Find the direction of the velocity component that is perpendicular to vectorBetween
@@ -207,11 +210,7 @@ bool isFacing(float target[3], float tolerance) {    float targetAtt[3];
 }
 
 float angleBetween(float vector1[3], float vector2[3]) {
-    mathVecNormalize(vector1, 3);
-    mathVecNormalize(vector2, 3);
-    float theta;
-    theta = acosf(mathVecInner(vector1, vector2, 3));
-    return theta;
+    return acosf(mathVecInner(vector1, vector2, 3) / (mathVecMagnitude(vector1, 3) * mathVecMagnitude(vector2, 3)));
 }
 
 void dock(int itemID)
