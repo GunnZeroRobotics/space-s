@@ -83,11 +83,12 @@ void loop()
                 for (int i = 0; i < 3; i++) { assemblyZone[i] = ass[i]; }
 
                 // If requirements of docking are satisfied, immediately dock (saves 1 second)
-                float vectorBetween[3];
-                mathVecSubtract(vectorBetween, itemPos[1], myPos, 3);
-                if (mathVecMagnitude(myVel, 3) < 0.01 || mathVecMagnitude(vectorBetween, 3) < 0.173 || !isFacing(itemPos[1], 0.25) || mathVecMagnitude(vectorBetween, 3) > 0.151) {
-                    game.dockItem(1);
-                }
+                // float vectorBetween[3];
+                // mathVecSubtract(vectorBetween, itemPos[1], myPos, 3);
+                // if (mathVecMagnitude(myVel, 3) < 0.01 || mathVecMagnitude(vectorBetween, 3) < 0.173 || !isFacing(itemPos[1], 0.25) || mathVecMagnitude(vectorBetween, 3) > 0.151) {
+                //     game.dockItem(1);
+                //     itemHeld = 1;
+                // }
             }
         } else {
             moveFast(spsLoc[3 - game.getNumSPSHeld()]);
@@ -135,30 +136,56 @@ bool closeTo(float vec[3], float target[3], float tolerance) {
 }
 
 void moveFast(float target[3]) {
-    // Currently assuming zero velocity perpendicular to vectorBetween
+    
     float vectorBetween[3];
     mathVecSubtract(vectorBetween, target, myPos, 3);
+
+    // Distance between SPHERE and target location
     float dist = mathVecMagnitude(vectorBetween, 3);
-    float velocityMag = mathVecMagnitude(myVel, 3);
 
-    if (velocityMag > 0.03) {
-        float zero[3] = {0, 0, 0};
-        api.setVelocityTarget(zero);
-        return;
-    }
-
+    // Use setPosition if very close to target b/c it is more accurate
     if (dist < 0.1) {
         api.setPositionTarget(target);
     } else {
-        if (dist < ((velocityMag * velocityMag) / (2 * accMax * 0.9))) {
-            float negForces[3];
-            for (int i = 0; i < 3; i++) { negForces[i] = vectorBetween[i] * -1 * fMax; }
-            api.setForces(negForces);
-        } else {
-            float forces[3];
-            for (int i = 0; i < 3; i++) { forces[i] = vectorBetween[i] * fMax; }
-            api.setForces(forces);
+        // Magnitude of SPHERE's velocity
+        float velocityMag = mathVecMagnitude(myVel, 3);
+
+        // Decompose our current velocity into components parallel and perpendicular
+        // to vectorBetween. These two variables only store magnitudes of the decomposed velocity
+        float vPerpendicularMag = velocityMag * sinf(angleBetween(vectorBetween, myVel));
+        float vParallelMag = velocityMag * cosf(angleBetween(vectorBetween, myVel)); 
+
+        // Calculate the forces required to travel to the target in optimal fuel/time ratio
+        // Uses kinematics equations and F = ma
+        // Since we have 60 seconds of fuel and game is 180 seconds long, assume that we will
+        // always be accelerating and at a value of max acceleration divided by 3
+        float forcePerpendicularMagnitude = -1 * mass * vParallelMag * vPerpendicularMag * dist / 2;
+        float forceParallelMagnitude = sqrtf((accMax/3) * (accMax/3) - (forcePerpendicularMagnitude / mass)) * mass;
+        // float forceParallelMagnitude = -1 * vParallelMag * vParallelMag / (2 * dist * mass);
+
+        // Find the direction of the velocity component that is perpendicular to vectorBetween
+        float vTemp[3]; // myVel cross product vectorBetween, perpendicular to both
+        mathVecCross(vTemp, myVel, vectorBetween);
+        float vPerpendicular[3]; // vectorBetween cross product result of above, gives perpendicular component of velocity
+        mathVecCross(vPerpendicular, vectorBetween, vTemp); 
+
+        // Normalize the vectors for scaling
+        mathVecNormalize(vectorBetween, 3);
+        mathVecNormalize(vPerpendicular, 3);
+        
+        // Scale the perpendicular and parallel vectors to the appropriate force length,
+        // Then combine and store in forceTotal
+        float forceParallelVector[3];
+        float forcePerpendicularVector[3];
+        float forceTotal[3];
+        for (int i = 0; i < 3; i++) {
+            forceParallelVector[i] = vectorBetween[i] * forceParallelMagnitude;
+            forcePerpendicularVector[i] = vPerpendicular[i] * forcePerpendicularMagnitude; 
+            forceTotal[i] = forceParallelVector[i] + forcePerpendicularVector[i];
         }
+            
+        DEBUG(("%f, %f, %f, %f", forceTotal[1], forceTotal[2], forceTotal[3], mathVecMagnitude(forceTotal, 3)));
+        api.setForces(forceTotal);
     }
 }
 
@@ -171,13 +198,20 @@ void pointToward(float target[3]) {
 }
 
 // Checks if SPHERE is facing a target point with tolerance (in radians)
-bool isFacing(float target[3], float tolerance) {
-    float targetAtt[3];
+bool isFacing(float target[3], float tolerance) {    float targetAtt[3];
     mathVecSubtract(targetAtt, target, myPos, 3);
     mathVecNormalize(targetAtt, 3);
     float theta;
     theta = acosf(mathVecInner(targetAtt, myAtt, 3));
     return theta < tolerance;
+}
+
+float angleBetween(float vector1[3], float vector2[3]) {
+    mathVecNormalize(vector1, 3);
+    mathVecNormalize(vector2, 3);
+    float theta;
+    theta = acosf(mathVecInner(vector1, vector2, 3));
+    return theta;
 }
 
 void dock(int itemID)
