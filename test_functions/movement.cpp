@@ -98,12 +98,17 @@ void moveFast(float target[3]) {
     // Currently assuming zero velocity perpendicular to vectorBetween
     float vectorBetween[3];
     mathVecSubtract(vectorBetween, target, myPos, 3);
+
     float dist = mathVecMagnitude(vectorBetween, 3);
     float velocityMag = mathVecMagnitude(myVel, 3);
 
+    // If we are close to the target, use setPosition
     if (dist < 0.08) {
         api.setPositionTarget(target);
     } else {
+        // Set forces to be negative if we need to slow down
+        // Determined by v^2 - v0^2 = 2*a*d
+        // Otherwise, set maximum forces in direction of vectorBetween
         if (dist < ((velocityMag * velocityMag) / (2 * accMax * 0.95))) {
             float negForces[3];
             for (int i = 0; i < 3; i++) { negForces[i] = vectorBetween[i] * -1 * fMax; }
