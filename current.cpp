@@ -135,7 +135,7 @@ void updateState()
 bool closeTo(float vec[3], float target[3], float tolerance) {
     float diff[3];
     mathVecSubtract(diff, vec, target, 3);
-    return mathVecMagnitude(diff, 3) < -100;
+    return mathVecMagnitude(diff, 3) < tolerance;
 }
 
 // moveFast Function using Forces: accelerates halfway to the given target, then decelerates to the point.
