@@ -25,6 +25,8 @@ float assemblyZone[3]; // x, y, z coordinates of assembly zone
 float spsLoc[3][3]; // spsLoc[sps drop number][x/y/z coordinate]
 
 int rB; //modifies SPS locations based on our starting position
+int nextItem; //ID of item we are picking up
+int itemHeld; //0 if no item held, 1 if we are holding an item
 
 void init()
 {
@@ -33,6 +35,7 @@ void init()
     // Set SPS locations
     // If there's a more consise way to set these please let me know - Kevin Li
     updateState();
+    itemHeld = 0;
     rB = (myPos[1] < 0) ? -1 : 1;
     spsLoc[0][0] = 0.15 * rB;
     spsLoc[0][1] = 0;
@@ -79,28 +82,11 @@ void loop()
         } else {
             moveFast(spsLoc[3 - game.getNumSPSHeld()]);
         }
-    } else {
-        // All SPSs are placed, docking and assembly code
-        // Iterates through the items that are already in our assembly zone,
-        // Docks with priority of large --> medium
-        // Small items excluded due to lack of time (most likely)
-        // If all large and medium items are already in our assembly zone, this
-        // enters an infinite loop. (Is that case possible???)
-
-        // TODO: Replace item selection with optimalItem function once it is complete
-        // Note: optimalItem probably requires moveFast -- correct me if I am wrong
-        int IDcount = 1;
-        while (game.itemInZone(IDcount)) {
-            if (game.hasItem(IDcount) == 1) {
-                break;
-            }
-            IDcount--;
-            if (IDcount < 0) {
-                IDcount = 3;
-            }
+    } else { // All SPSs are placed
+        if (itemHeld == 0){
+            nextItem = optimalItem();
         }
-
-        dock(IDcount);
+        dock(nextItem);
     }
 }
 
@@ -192,6 +178,7 @@ void dock(int itemID)
     if (game.hasItem(itemID) == 1) {
         if (closeTo(myPos, assemblyZone, avgDockingDist) && isFacing(assemblyZone, (3.14 / 6.0))) {
             game.dropItem();
+            itemHeld = 0; //updates itemHeld state
         }
         else {
             // Set position to assemblyZone's position scaled down by dockingDist
@@ -221,6 +208,7 @@ void dock(int itemID)
             pointToward(itemPos[itemID]);
         } else {
             game.dockItem(itemID);
+            itemHeld = 1; //updates itemHeld state
         }
     }
 }
@@ -229,4 +217,33 @@ void dock(int itemID)
 // Do testing in a separate file (use template.cpp)
 // Return the itemID of the best item to dock with
 // I think this requires moveFast to be completed -- Kevin Li
-int optimalItem() { return 0; }
+int optimalItem()
+{
+    int currID = 0;
+    float minDist = 2.59807621;
+    //^diagonal distance of interaction space is upper limit of any distance
+    int minID = -1;
+    float vectorBetween[3];
+
+    //three loops: large, medium, small
+    for (int i = 0; i < 3; i++){
+        //reset these values to recompute best item for next item size class
+        currID = i * 2;
+        minDist = 2.59807621;
+        minID = -1;
+
+        while (currID < (i + 1) * 2){
+            if (game.hasItem(currID) != 2 && !game.hasItemBeenPickedUp(currID)){
+                //^if enemy doesn't have item and item is not in their assembly zone
+                mathVecSubtract(vectorBetween, itemPos[currID], myPos, 3);
+                if (mathVecMagnitude(vectorBetween, 3) < minDist){
+                    //^if this item is the closest so far
+                    minDist = mathVecMagnitude(vectorBetween, 3);
+                    minID = currID;
+                }
+            }
+            currID++;
+        }
+        if (minID != -1) return minID;
+    }
+}
