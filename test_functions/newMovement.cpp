@@ -187,7 +187,7 @@ void moveFast(float target[3]) {
             forceTotal[i] = forceParallelVector[i] + forcePerpendicularVector[i];
         }
             
-        DEBUG(("%f, %f, %f, %f", forceTotal[1], forceTotal[2], forceTotal[3], mathVecMagnitude(forceTotal, 3)));
+        DEBUG(("%f, %f, %f, %f", forceTotal[0], forceTotal[1], forceTotal[2], mathVecMagnitude(forceTotal, 3)));
         api.setForces(forceTotal);
     }
 }
