@@ -219,7 +219,7 @@ int optimalItem()
         minID = -1;
 
         while (currID < (i + 1) * 2){
-            if (game.hasItem(currID == 1)){
+            if (game.hasItem(currID) == 1){
                 return currID;
             } else if (game.hasItem(currID) != 2 && !game.hasItemBeenPickedUp(currID)){
                 //^if enemy doesn't have item and item is not in their assembly zone
