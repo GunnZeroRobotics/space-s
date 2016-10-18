@@ -72,12 +72,8 @@ void loop()
                 game.getZone(ass);
                 for (int i = 0; i < 3; i++) { assemblyZone[i] = ass[i]; }
 
-                // If requirements of docking are satisfied, immediately dock (saves 1 second)
-                float vectorBetween[3];
-                mathVecSubtract(vectorBetween, itemPos[1], myPos, 3);
-                if (mathVecMagnitude(myVel, 3) < 0.01 || mathVecMagnitude(vectorBetween, 3) < 0.173 || !isFacing(itemPos[1], 0.25) || mathVecMagnitude(vectorBetween, 3) > 0.151) {
-                    game.dockItem(1);
-                }
+                nextItem = optimalItem();
+                dock(nextItem);
             }
         } else {
             moveFast(spsLoc[3 - game.getNumSPSHeld()]);
@@ -133,7 +129,7 @@ void moveFast(float target[3]) {
 
     mathVecSubtract(temp, target, myPos, 3);
     dist = mathVecNormalize(temp, 3);
-    
+
     // Not sure who changed values inside of if statment & added for loop - Larry
     // TODO: WHOEVER WROTE THIS PLEASE ADD MORE COMMENTS PLEASE PLEASE PLEASE
     if (dist > 0.5 * 0.01 * 36 + mathVecMagnitude(myPos + 3, 3) * 6) {
