@@ -211,21 +211,28 @@ int optimalItem()
     int minID = -1;
     float vectorBetween[3];
 
-    //three loops: large, medium, small
+    //checks for whether we are holding an item: if so, return that item
+    for (int i = 0; i < 6; i++){
+        if (game.hasItem(i) == 1){
+            return i;
+          }
+    }
+
+    //three loops: large (i = 0), medium (i = 1), small (i = 2)
     for (int i = 0; i < 3; i++){
         //reset these values to recompute best item for next item size class
         currID = i * 2;
         minDist = 2.59807621;
         minID = -1;
 
+        //iterates on the two items in this size class
         while (currID < (i + 1) * 2){
-            if (game.hasItem(currID) == 1){
-                return currID;
-            } else if (game.hasItem(currID) != 2 && !game.hasItemBeenPickedUp(currID)){
-                //^if enemy doesn't have item and item is not in their assembly zone
+            if (game.hasItem(currID) != 2 && !game.itemInZone(currID)){
+                //^if enemy doesn't have item and item is not in our assembly zone
+                //(allows for stealing!)
                 mathVecSubtract(vectorBetween, itemPos[currID], myPos, 3);
                 if (mathVecMagnitude(vectorBetween, 3) < minDist){
-                    //^if this item is the closest so far
+                    //^if this item is the closest so far, store it
                     minDist = mathVecMagnitude(vectorBetween, 3);
                     minID = currID;
                 }
@@ -233,5 +240,6 @@ int optimalItem()
             currID++;
         }
         if (minID != -1) return minID;
+        //^if there is a valid item in this size class, return the closest one
     }
 }
