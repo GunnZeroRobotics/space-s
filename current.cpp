@@ -25,8 +25,6 @@ float assemblyZone[3]; // x, y, z coordinates of assembly zone
 float spsLoc[3][3]; // spsLoc[sps drop number][x/y/z coordinate]
 
 int rB; //modifies SPS locations based on our starting position
-int nextItem; //ID of item we are picking up
-int itemHeld; //0 if no item held, 1 if we are holding an item
 
 void init()
 {
@@ -35,7 +33,6 @@ void init()
     // Set SPS locations
     // If there's a more consise way to set these please let me know - Kevin Li
     updateState();
-    itemHeld = 0;
     rB = (myPos[1] < 0) ? -1 : 1;
     spsLoc[0][0] = 0.15 * rB;
     spsLoc[0][1] = 0;
@@ -71,18 +68,13 @@ void loop()
                 float ass[4];
                 game.getZone(ass);
                 for (int i = 0; i < 3; i++) { assemblyZone[i] = ass[i]; }
-
-                nextItem = optimalItem();
-                dock(nextItem);
+                dock(optimalItem());
             }
         } else {
             moveFast(spsLoc[3 - game.getNumSPSHeld()]);
         }
     } else { // All SPSs are placed
-        if (itemHeld == 0){
-            nextItem = optimalItem();
-        }
-        dock(nextItem);
+        dock(optimalItem());
     }
 }
 
@@ -174,7 +166,6 @@ void dock(int itemID)
     if (game.hasItem(itemID) == 1) {
         if (closeTo(myPos, assemblyZone, avgDockingDist) && isFacing(assemblyZone, (3.14 / 6.0))) {
             game.dropItem();
-            itemHeld = 0; //updates itemHeld state
         }
         else {
             // Set position to assemblyZone's position scaled down by dockingDist
@@ -204,7 +195,6 @@ void dock(int itemID)
             pointToward(itemPos[itemID]);
         } else {
             game.dockItem(itemID);
-            itemHeld = 1; //updates itemHeld state
         }
     }
 }
@@ -229,7 +219,9 @@ int optimalItem()
         minID = -1;
 
         while (currID < (i + 1) * 2){
-            if (game.hasItem(currID) != 2 && !game.hasItemBeenPickedUp(currID)){
+            if (game.hasItem(currID == 1)){
+                return currID;
+            } else if (game.hasItem(currID) != 2 && !game.hasItemBeenPickedUp(currID)){
                 //^if enemy doesn't have item and item is not in their assembly zone
                 mathVecSubtract(vectorBetween, itemPos[currID], myPos, 3);
                 if (mathVecMagnitude(vectorBetween, 3) < minDist){
