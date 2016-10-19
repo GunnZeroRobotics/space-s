@@ -1,15 +1,9 @@
-// CURRENT VERSION:
-// Averages ~30 points per game without an opponent
-//
-// General TODOs:
-// Replace all setPositionTarget with moveFast once it is completed
-//
-// Function/line specific TODOs commented on their corresponding lines
-
 // Temporary values that are relatively accurate
 float accMax;
 float mass;
 float fMax;
+
+int gameTime;
 
 // myState variables
 float myPos[3];
@@ -30,17 +24,16 @@ float assemblyZone[3]; // x, y, z coordinates of assembly zone
 float spsLoc[3][3]; // spsLoc[sps drop number][x/y/z coordinate]
 
 int rB; //modifies SPS locations based on our starting position
-int nextItem; //ID of item we are picking up
-int itemHeld; //0 if no item held, 1 if we are holding an item
 
 void init()
 {
+    gameTime = 0;
+    
     game.dropSPS(); // drop SPS at spawn point
 
     // Set SPS locations
     // If there's a more consise way to set these please let me know - Kevin Li
     updateState();
-    itemHeld = 0;
     rB = (myPos[1] < 0) ? -1 : 1;
     spsLoc[0][0] = 0.15 * rB;
     spsLoc[0][1] = 0;
@@ -51,17 +44,17 @@ void init()
     spsLoc[2][0] = -0.39 * rB;
     spsLoc[2][1] = -0.23 * rB;
     spsLoc[2][2] = -0.23 * rB;
-    
+
     // Temporary values that are relatively accurate
     mass = 4.65; // 4.64968
     accMax = 0.008476;
     fMax = 0.4; // 0.039411 
-
-    api.setPositionTarget(spsLoc[1]);
 }
 
 void loop()
 {
+    gameTime++;
+
     // Updates state arrays of SPHEREs and items
     updateState();
 
@@ -69,7 +62,7 @@ void loop()
         // Code for placing SPSs
         int spsHeld = game.getNumSPSHeld();
 
-        if (closeTo(myPos, spsLoc[3 - spsHeld], (spsHeld == 1) ? 0.03 : 0.03)) {
+        if (closeTo(myPos, spsLoc[3 - spsHeld], (spsHeld == 1) ? 0.03 : 0.08)) {
             // If close to sps location, drop SPS and update SPS position array
             // Large tolerance used (8 cm) because precision not needed and
             // takes too long to slow down
@@ -83,23 +76,13 @@ void loop()
                 float ass[4];
                 game.getZone(ass);
                 for (int i = 0; i < 3; i++) { assemblyZone[i] = ass[i]; }
-
-                // If requirements of docking are satisfied, immediately dock (saves 1 second)
-                // float vectorBetween[3];
-                // mathVecSubtract(vectorBetween, itemPos[1], myPos, 3);
-                // if (mathVecMagnitude(myVel, 3) < 0.01 || mathVecMagnitude(vectorBetween, 3) < 0.173 || !isFacing(itemPos[1], 0.25) || mathVecMagnitude(vectorBetween, 3) > 0.151) {
-                //     game.dockItem(1);
-                //     itemHeld = 1;
-                // }
+                dock(optimalItem());
             }
         } else {
             moveFast(spsLoc[3 - game.getNumSPSHeld()]);
         }
     } else { // All SPSs are placed
-        if (itemHeld == 0){
-            nextItem = optimalItem();
-        }
-        dock(nextItem);
+        dock(optimalItem());
     }
 }
 
@@ -137,8 +120,8 @@ bool closeTo(float vec[3], float target[3], float tolerance) {
     return mathVecMagnitude(diff, 3) < tolerance;
 }
 
+// Checks if SPHERES is ____ away from target location -- if so, use setVelocity, else, use setPosition
 void moveFast(float target[3]) {
-    
     float vectorBetween[3];
     mathVecSubtract(vectorBetween, target, myPos, 3);
 
@@ -157,18 +140,6 @@ void moveFast(float target[3]) {
         float vPerpendicularMag = velocityMag * sinf(angleBetween(vectorBetween, myVel));
         float vParallelMag = velocityMag * cosf(angleBetween(vectorBetween, myVel)); 
 
-        DEBUG(("%f", angleBetween(vectorBetween, myVel)));
-
-        // Calculate the forces required to travel to the target in optimal fuel/time ratio
-        // Uses kinematics equations and F = ma
-        // Ridiculously complex expression, message Kevin Li for details
-        float forcePerpendicularMagnitude = 2 * vPerpendicularMag * fMax / (sqrtf(vParallelMag * vParallelMag + 4 * vPerpendicularMag * vPerpendicularMag));
-        float forceParallelMagnitude = vParallelMag * fMax / (sqrtf(vParallelMag * vParallelMag + 4 * vPerpendicularMag * vPerpendicularMag));
-        // if (dist < ((vParallelMag * vParallelMag) / (2 * accMax * 0.95))) {
-            // forceParallelMagnitude *= -1;
-        // }
-        // float forceParallelMagnitude = -1 * vParallelMag * vParallelMag / (2 * dist * mass);
-
         // Find the direction of the velocity component that is perpendicular to vectorBetween
         float vTemp[3]; // myVel cross product vectorBetween, perpendicular to both
         mathVecCross(vTemp, myVel, vectorBetween);
@@ -178,21 +149,24 @@ void moveFast(float target[3]) {
         // Normalize the vectors for scaling
         mathVecNormalize(vectorBetween, 3);
         mathVecNormalize(vPerpendicular, 3);
-        
-        // Scale the perpendicular and parallel vectors to the appropriate force length,
-        // Then combine and store in forceTotal
-        float forceParallelVector[3];
-        float forcePerpendicularVector[3];
-        float forceTotal[3];
-        for (int i = 0; i < 3; i++) {
-            forceParallelVector[i] = vectorBetween[i] * forceParallelMagnitude;
-            forcePerpendicularVector[i] = vPerpendicular[i] * forcePerpendicularMagnitude; 
-            forceTotal[i] = forceParallelVector[i] + forcePerpendicularVector[i];
+
+        // If we have any perpendicular velocity, get rid of it
+        if (vPerpendicularMag > 0.01) {
+            for (int i = 0; i < 3; i++) {
+                vPerpendicular[i] *= (-1 * mass * vPerpendicularMag);
+            }
+            api.setForces(vPerpendicular);
+        } else {
+            if (dist < ((velocityMag * velocityMag) / (2 * accMax * 0.25))) {
+                float negForces[3];
+                for (int i = 0; i < 3; i++) { negForces[i] = vectorBetween[i] * -1 * fMax * 0.4; }
+                api.setForces(negForces);
+            } else {
+                float forces[3];
+                for (int i = 0; i < 3; i++) { forces[i] = vectorBetween[i] * fMax * 0.33; }
+                api.setForces(forces);
+            }
         }
-            
-        // DEBUG(("%f", vPerpendicularMag));
-        //DEBUG(("%f, %f, %f", forcePerpendicularMagnitude, forceParallelMagnitude, mathVecMagnitude(forceTotal, 3)));
-        api.setForces(forceTotal);
     }
 }
 
@@ -204,17 +178,18 @@ void pointToward(float target[3]) {
     api.setAttitudeTarget(vectorBetween);
 }
 
+float angleBetween(float vector1[3], float vector2[3]) {
+    return acosf(mathVecInner(vector1, vector2, 3) / (mathVecMagnitude(vector1, 3) * mathVecMagnitude(vector2, 3)));
+}
+
 // Checks if SPHERE is facing a target point with tolerance (in radians)
-bool isFacing(float target[3], float tolerance) {    float targetAtt[3];
+bool isFacing(float target[3], float tolerance) {
+    float targetAtt[3];
     mathVecSubtract(targetAtt, target, myPos, 3);
     mathVecNormalize(targetAtt, 3);
     float theta;
     theta = acosf(mathVecInner(targetAtt, myAtt, 3));
     return theta < tolerance;
-}
-
-float angleBetween(float vector1[3], float vector2[3]) {
-    return acosf(mathVecInner(vector1, vector2, 3) / (mathVecMagnitude(vector1, 3) * mathVecMagnitude(vector2, 3)));
 }
 
 void dock(int itemID)
@@ -231,7 +206,6 @@ void dock(int itemID)
     if (game.hasItem(itemID) == 1) {
         if (closeTo(myPos, assemblyZone, avgDockingDist) && isFacing(assemblyZone, (3.14 / 6.0))) {
             game.dropItem();
-            itemHeld = 0; //updates itemHeld state
         }
         else {
             // Set position to assemblyZone's position scaled down by dockingDist
@@ -261,42 +235,53 @@ void dock(int itemID)
             pointToward(itemPos[itemID]);
         } else {
             game.dockItem(itemID);
-            itemHeld = 1; //updates itemHeld state
         }
     }
 }
 
-// TODO: Write this function.
-// Do testing in a separate file (use template.cpp)
+// TODO: Add weight for stealing
 // Return the itemID of the best item to dock with
-// I think this requires moveFast to be completed -- Kevin Li
 int optimalItem()
 {
-    int currID = 0;
-    float minDist = 2.59807621;
-    //^diagonal distance of interaction space is upper limit of any distance
-    int minID = -1;
-    float vectorBetween[3];
-
-    //three loops: large, medium, small
-    for (int i = 0; i < 3; i++){
-        //reset these values to recompute best item for next item size class
-        currID = i * 2;
-        minDist = 2.59807621;
-        minID = -1;
-
-        while (currID < (i + 1) * 2){
-            if (game.hasItem(currID) != 2 && !game.hasItemBeenPickedUp(currID)){
-                //^if enemy doesn't have item and item is not in their assembly zone
-                mathVecSubtract(vectorBetween, itemPos[currID], myPos, 3);
-                if (mathVecMagnitude(vectorBetween, 3) < minDist){
-                    //^if this item is the closest so far
-                    minDist = mathVecMagnitude(vectorBetween, 3);
-                    minID = currID;
-                }
-            }
-            currID++;
+    int maxPtsID = 0;
+    float maxPts = -1;
+    
+    for (int itemID = 0; itemID < 6; itemID++) {
+        // If the item is in our assembly zone, skip it
+        while (game.itemInZone(itemID)) { 
+            itemID++;
         }
-        if (minID != -1) return minID;
+        if (itemID > 5) { break; }
+
+        // If we're holding an item, return that item
+        if (game.hasItem(itemID) == 1) { return itemID; }
+
+        float itemDist[3]; // Vector between SPHERE and item
+        float zoneDist[3]; // Vector between item and assembly zone
+        
+        // If opponent has the item, assume it's in their assembly zone
+        if (game.hasItem(itemID) == 2) {
+            float oppAss[3];
+            for (int i = 0; i < 3; i++) { oppAss[i] = assemblyZone[i] * -1; }
+            mathVecSubtract(itemDist, oppAss, myPos, 3);
+            mathVecSubtract(zoneDist, assemblyZone, oppAss, 3);
+        }  else {
+            mathVecSubtract(itemDist, itemPos[itemID], myPos, 3);
+            mathVecSubtract(zoneDist, assemblyZone, itemPos[itemID], 3);
+        }
+        
+        float travelTime = mathVecMagnitude(itemDist, 3) + mathVecMagnitude(zoneDist, 3); // Replace this once we have an estimate for movement time
+        
+        float timeInZone = 180 - gameTime - travelTime;
+        
+        float itemPPS = (itemID < 2) ? 0.2 : ((itemID < 4) ? 0.15 : 0.1);
+        
+        if (itemPPS * timeInZone > maxPts) {
+            maxPts = itemPPS * timeInZone;
+            maxPtsID = itemID;
+        }
+
     }
+
+    return maxPtsID;
 }
