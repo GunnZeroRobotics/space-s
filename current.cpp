@@ -6,6 +6,8 @@
 //
 // Function/line specific TODOs commented on their corresponding lines
 
+int gameTime;
+
 // myState variables
 float myPos[3];
 float myVel[3];
@@ -28,6 +30,8 @@ int rB; //modifies SPS locations based on our starting position
 
 void init()
 {
+    gameTime = 0;
+
     game.dropSPS(); // drop SPS at spawn point
 
     // Set SPS locations
@@ -47,6 +51,8 @@ void init()
 
 void loop()
 {
+    gameTime++;
+
     // Updates state arrays of SPHEREs and items
     updateState();
 
@@ -199,47 +205,80 @@ void dock(int itemID)
     }
 }
 
-// TODO: Write this function.
-// Do testing in a separate file (use template.cpp)
+// TODO: Add weight for stealing
 // Return the itemID of the best item to dock with
-// I think this requires moveFast to be completed -- Kevin Li
 int optimalItem()
 {
-    int currID = 0;
-    float minDist = 2.59807621;
-    //^diagonal distance of interaction space is upper limit of any distance
-    int minID = -1;
-    float vectorBetween[3];
-
-    //checks for whether we are holding an item: if so, return that item
-    for (int i = 0; i < 6; i++){
-        if (game.hasItem(i) == 1){
-            return i;
-          }
-    }
-
-    //three loops: large (i = 0), medium (i = 1), small (i = 2)
-    for (int i = 0; i < 3; i++){
-        //reset these values to recompute best item for next item size class
-        currID = i * 2;
-        minDist = 2.59807621;
-        minID = -1;
-
-        //iterates on the two items in this size class
-        while (currID < (i + 1) * 2){
-            if (game.hasItem(currID) != 2 && !game.itemInZone(currID)){
-                //^if enemy doesn't have item and item is not in our assembly zone
-                //(allows for stealing!)
-                mathVecSubtract(vectorBetween, itemPos[currID], myPos, 3);
-                if (mathVecMagnitude(vectorBetween, 3) < minDist){
-                    //^if this item is the closest so far, store it
-                    minDist = mathVecMagnitude(vectorBetween, 3);
-                    minID = currID;
-                }
-            }
-            currID++;
+    int maxPtsID = 0;
+    float maxPts = -1;
+    
+    for (int itemID = 0; itemID < 6; itemID++) {
+        // If the item is in our assembly zone, skip it
+        while (game.itemInZone(itemID)) { 
+            itemID++;
         }
-        if (minID != -1) return minID;
-        //^if there is a valid item in this size class, return the closest one
+        if (itemID > 5) { break; }
+
+        // If we're holding an item, return that item
+        if (game.hasItem(itemID) == 1) { return itemID; }
+
+        float itemDist[3]; // Vector between SPHERE and item
+        float zoneDist[3]; // Vector between item and assembly zone
+        
+        // If opponent has the item, assume it's in their assembly zone
+        if (game.hasItem(itemID) == 2) {
+            float oppAss[3];
+            for (int i = 0; i < 3; i++) { oppAss[i] = assemblyZone[i] * -1; }
+            mathVecSubtract(itemDist, oppAss, myPos, 3);
+            mathVecSubtract(zoneDist, assemblyZone, oppAss, 3);
+        }  else {
+            mathVecSubtract(itemDist, itemPos[itemID], myPos, 3);
+            mathVecSubtract(zoneDist, assemblyZone, itemPos[itemID], 3);
+        }
+        
+        float travelTime = mathVecMagnitude(itemDist, 3) + mathVecMagnitude(zoneDist, 3); // Replace this once we have an estimate for movement time
+        
+        float timeInZone = 180 - gameTime - travelTime;
+        
+        float itemPPS = (itemID < 2) ? 0.2 : ((itemID < 4) ? 0.15 : 0.1);
+        
+        if (itemPPS * timeInZone > maxPts) {
+            maxPts = itemPPS * timeInZone;
+            maxPtsID = itemID;
+        }
+
     }
+
+    return maxPtsID;
+
+    // int currID = 0;
+    // float minDist = 2.59807621;
+    // //^diagonal distance of interaction space is upper limit of any distance
+    // int minID = -1;
+    // float vectorBetween[3];
+
+    // //three loops: large, medium, small
+    // for (int i = 0; i < 3; i++){
+    //     //reset these values to recompute best item for next item size class
+    //     currID = i * 2;
+    //     minDist = 2.59807621;
+    //     minID = -1;
+
+    //     while (currID < (i + 1) * 2){
+    //         if (game.hasItem(currID) == 1){
+    //             return currID;
+    //         } else if (game.hasItem(currID) != 2 && !game.hasItemBeenPickedUp(currID)){
+    //             //^if enemy doesn't have item and item is not in their assembly zone
+    //             mathVecSubtract(vectorBetween, itemPos[currID], myPos, 3);
+    //             if (mathVecMagnitude(vectorBetween, 3) < minDist){
+    //                 //^if this item is the closest so far
+    //                 minDist = mathVecMagnitude(vectorBetween, 3);
+    //                 minID = currID;
+    //             }
+    //         }
+    //         currID++;
+    //     }
+    //     if (minID != -1) return minID;
+    // }
 }
+
