@@ -155,15 +155,16 @@ void moveFast(float target[3]) {
         float vPerpendicularMag = velocityMag * sinf(angleBetween(vectorBetween, myVel));
         float vParallelMag = velocityMag * cosf(angleBetween(vectorBetween, myVel)); 
 
+        DEBUG(("%f", angleBetween(vectorBetween, myVel)));
+
         // Calculate the forces required to travel to the target in optimal fuel/time ratio
         // Uses kinematics equations and F = ma
-        // Since we have 60 seconds of fuel and game is 180 seconds long, assume that we will
-        // always be accelerating and at a value of max acceleration divided by 3
-        float forcePerpendicularMagnitude = -1 * mass * vParallelMag * vPerpendicularMag * dist / 2;
-        float forceParallelMagnitude = sqrtf((fMax/3) * (fMax/3) - forcePerpendicularMagnitude * forcePerpendicularMagnitude);
-        if (dist < ((velocityMag * velocityMag) / (2 * accMax * 0.95))) {
-            forceParallelMagnitude *= -1;
-        }
+        // Ridiculously complex expression, message Kevin Li for details
+        float forcePerpendicularMagnitude = 2 * vPerpendicularMag * fMax / (sqrtf(vParallelMag * vParallelMag + 4 * vPerpendicularMag * vPerpendicularMag));
+        float forceParallelMagnitude = vParallelMag * fMax / (sqrtf(vParallelMag * vParallelMag + 4 * vPerpendicularMag * vPerpendicularMag));
+        // if (dist < ((vParallelMag * vParallelMag) / (2 * accMax * 0.95))) {
+            // forceParallelMagnitude *= -1;
+        // }
         // float forceParallelMagnitude = -1 * vParallelMag * vParallelMag / (2 * dist * mass);
 
         // Find the direction of the velocity component that is perpendicular to vectorBetween
@@ -187,7 +188,8 @@ void moveFast(float target[3]) {
             forceTotal[i] = forceParallelVector[i] + forcePerpendicularVector[i];
         }
             
-        DEBUG(("%f, %f", forcePerpendicularMagnitude, forceParallelMagnitude));
+        // DEBUG(("%f", vPerpendicularMag));
+        //DEBUG(("%f, %f, %f", forcePerpendicularMagnitude, forceParallelMagnitude, mathVecMagnitude(forceTotal, 3)));
         api.setForces(forceTotal);
     }
 }
