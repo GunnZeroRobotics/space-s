@@ -128,6 +128,17 @@ void moveFast(float target[3]) {
     mathVecSubtract(temp, target, myPos, 3);
     dist = mathVecNormalize(temp, 3);
 
+    float velocityMag = mathVecMagnitude(myVel, 3);
+
+    if (velocityMag > 0.09) {  // Distance between SPHERE and target location
+        float zero[3] = {0, 0, 0};
+        DEBUG(("too fast 5 u"));
+        // float dist = mathVecMagnitude(vectorBetween, 3);
+        api.setVelocityTarget(zero);
+        return;
+
+    }
+    
     // Not sure who changed values inside of if statment & added for loop - Larry
     // TODO: WHOEVER WROTE THIS PLEASE ADD MORE COMMENTS PLEASE PLEASE PLEASE
     if (dist > 0.5 * 0.01 * 36 + mathVecMagnitude(myPos + 3, 3) * 6) {
@@ -211,10 +222,10 @@ int optimalItem()
 {
     int maxPtsID = 0;
     float maxPts = -1;
-    
+
     for (int itemID = 0; itemID < 6; itemID++) {
         // If the item is in our assembly zone, skip it
-        while (game.itemInZone(itemID)) { 
+        while (game.itemInZone(itemID)) {
             itemID++;
         }
         if (itemID > 5) { break; }
@@ -224,7 +235,7 @@ int optimalItem()
 
         float itemDist[3]; // Vector between SPHERE and item
         float zoneDist[3]; // Vector between item and assembly zone
-        
+
         // If opponent has the item, assume it's in their assembly zone
         if (game.hasItem(itemID) == 2) {
             float oppAss[3];
@@ -235,13 +246,13 @@ int optimalItem()
             mathVecSubtract(itemDist, itemPos[itemID], myPos, 3);
             mathVecSubtract(zoneDist, assemblyZone, itemPos[itemID], 3);
         }
-        
+
         float travelTime = mathVecMagnitude(itemDist, 3) + mathVecMagnitude(zoneDist, 3); // Replace this once we have an estimate for movement time
-        
+
         float timeInZone = 180 - gameTime - travelTime;
-        
+
         float itemPPS = (itemID < 2) ? 0.2 : ((itemID < 4) ? 0.15 : 0.1);
-        
+
         if (itemPPS * timeInZone > maxPts) {
             maxPts = itemPPS * timeInZone;
             maxPtsID = itemID;
@@ -281,4 +292,3 @@ int optimalItem()
     //     if (minID != -1) return minID;
     // }
 }
-
