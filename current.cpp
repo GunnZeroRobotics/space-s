@@ -1,11 +1,3 @@
-// CURRENT VERSION:
-// Averages ~30 points per game without an opponent
-//
-// General TODOs:
-// Replace all setPositionTarget with moveFast once it is completed
-//
-// Function/line specific TODOs commented on their corresponding lines
-
 int gameTime;
 
 // myState variables
@@ -14,8 +6,7 @@ float myVel[3];
 float myAtt[3];
 
 // otherState variables
-// Currently not in use, uncomment these and their corresponding lines
-// in the updateState function if needed
+// Currently not in use, uncomment these and their corresponding lines in the updateState function if needed
 // float otherPos[3];
 // float otherVel[3];
 // float otherAtt[3];
@@ -26,7 +17,8 @@ float assemblyZone[3]; // x, y, z coordinates of assembly zone
 
 float spsLoc[3][3]; // spsLoc[sps drop number][x/y/z coordinate]
 
-int rB; //modifies SPS locations based on our starting position
+int rB; // modifies SPS locations based on our starting position: -1 is red, 1 is blue
+
 
 void init()
 {
@@ -62,8 +54,7 @@ void loop()
 
         if (closeTo(myPos, spsLoc[3 - spsHeld], (spsHeld == 1) ? 0.03 : 0.08)) {
             // If close to sps location, drop SPS and update SPS position array
-            // Large tolerance used (8 cm) because precision not needed and
-            // takes too long to slow down
+            // Large tolerance used (8 cm) because precision not needed and takes too long to slow down
             // Small tolerance used for last SPS because it is right next to an item
             game.dropSPS();
             for (int i = 0; i < 3; i++) { spsLoc[3 - spsHeld][i] = myPos[i]; }
@@ -140,7 +131,6 @@ void moveFast(float target[3]) {
     }
     
     // Not sure who changed values inside of if statment & added for loop - Larry
-    // TODO: WHOEVER WROTE THIS PLEASE ADD MORE COMMENTS PLEASE PLEASE PLEASE
     if (dist > 0.5 * 0.01 * 36 + mathVecMagnitude(myPos + 3, 3) * 6) {
         for (n = 0; n < 3; n++) { //scale velocity (disp) to speed
             temp[n] *= dist;
@@ -216,8 +206,7 @@ void dock(int itemID)
     }
 }
 
-// TODO: Add weight for stealing
-// Return the itemID of the best item to dock with
+// Returns the itemID of the best item to dock with
 int optimalItem()
 {
     int maxPtsID = 0;
@@ -257,38 +246,7 @@ int optimalItem()
             maxPts = itemPPS * timeInZone;
             maxPtsID = itemID;
         }
-
     }
 
     return maxPtsID;
-
-    // int currID = 0;
-    // float minDist = 2.59807621;
-    // //^diagonal distance of interaction space is upper limit of any distance
-    // int minID = -1;
-    // float vectorBetween[3];
-
-    // //three loops: large, medium, small
-    // for (int i = 0; i < 3; i++){
-    //     //reset these values to recompute best item for next item size class
-    //     currID = i * 2;
-    //     minDist = 2.59807621;
-    //     minID = -1;
-
-    //     while (currID < (i + 1) * 2){
-    //         if (game.hasItem(currID) == 1){
-    //             return currID;
-    //         } else if (game.hasItem(currID) != 2 && !game.hasItemBeenPickedUp(currID)){
-    //             //^if enemy doesn't have item and item is not in their assembly zone
-    //             mathVecSubtract(vectorBetween, itemPos[currID], myPos, 3);
-    //             if (mathVecMagnitude(vectorBetween, 3) < minDist){
-    //                 //^if this item is the closest so far
-    //                 minDist = mathVecMagnitude(vectorBetween, 3);
-    //                 minID = currID;
-    //             }
-    //         }
-    //         currID++;
-    //     }
-    //     if (minID != -1) return minID;
-    // }
 }
