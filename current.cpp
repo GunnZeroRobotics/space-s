@@ -27,7 +27,6 @@ void init()
     game.dropSPS(); // drop SPS at spawn point
 
     // Set SPS locations
-    // If there's a more consise way to set these please let me know - Kevin Li
     updateState();
     rB = (myPos[1] < 0) ? -1 : 1;
     spsLoc[0][0] = 0.15 * rB;
@@ -70,7 +69,8 @@ void loop()
         } else {
             moveFast(spsLoc[3 - game.getNumSPSHeld()]);
         }
-    } else { // All SPSs are placed
+    } else { 
+        // All SPSs are placed
         dock(optimalItem());
     }
 }
@@ -103,6 +103,7 @@ void updateState()
     }
 }
 
+// Returns whether SPHERE is within a given tolerance of a target point
 bool closeTo(float vec[3], float target[3], float tolerance) {
     float diff[3];
     mathVecSubtract(diff, vec, target, 3);
@@ -127,7 +128,6 @@ void moveFast(float target[3]) {
         // float dist = mathVecMagnitude(vectorBetween, 3);
         api.setVelocityTarget(zero);
         return;
-
     }
     
     // Not sure who changed values inside of if statment & added for loop - Larry
@@ -142,7 +142,8 @@ void moveFast(float target[3]) {
 }
 
 // Sets attitude toward a given point
-void pointToward(float target[3]) {
+void pointToward(float target[3]) 
+{
     float vectorBetween[3];
     mathVecSubtract(vectorBetween, target, myPos, 3);
     mathVecNormalize(vectorBetween, 3);
@@ -150,7 +151,8 @@ void pointToward(float target[3]) {
 }
 
 // Checks if SPHERE is facing a target point with tolerance (in radians)
-bool isFacing(float target[3], float tolerance) {
+bool isFacing(float target[3], float tolerance) 
+{
     float targetAtt[3];
     mathVecSubtract(targetAtt, target, myPos, 3);
     mathVecNormalize(targetAtt, 3);
