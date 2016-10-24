@@ -165,15 +165,12 @@ void moveFast(float target[3]) {
         DEBUG(("%f", angleBetween(vectorBetween, myVel)));
 
         // Calculate the forces required to travel to the target in optimal fuel/time ratio
-        // Uses kinematics equations and F = ma
-        // Ridiculously complex expression, message Kevin Li for details
-        float forcePerpendicularMagnitude = 2 * vPerpendicularMag * fMax / (sqrtf(vParallelMag * vParallelMag + 4 * vPerpendicularMag * vPerpendicularMag));
-        forcePerpendicularMagnitude *= -1;
-        float forceParallelMagnitude = vParallelMag * fMax / (sqrtf(vParallelMag * vParallelMag + 4 * vPerpendicularMag * vPerpendicularMag));
-        if (dist < ((vParallelMag * vParallelMag) / (2 * accMax * 0.95))) {
+        float forcePerpendicularMagnitude = (-1 * vPerpendicularMag * vPerpendicularMag * mass) / (2 * dist);
+        float forceParallelMagnitude = sqrtf(fMax * fMax - forcePerpendicularMagnitude * forcePerpendicularMagnitude);
+        float accParallel = forceParallelMagnitude / mass;
+        if (dist < ((vParallelMag * vParallelMag) / (2 * accParallel))) {
             forceParallelMagnitude *= -1;
         }
-        // float forceParallelMagnitude = -1 * vParallelMag * vParallelMag / (2 * dist * mass);
 
         // Find the direction of the velocity component that is perpendicular to vectorBetween
         float vTemp[3]; // myVel cross product vectorBetween, perpendicular to both
