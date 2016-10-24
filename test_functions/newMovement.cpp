@@ -55,7 +55,7 @@ void init()
     // Temporary values that are relatively accurate
     mass = 4.65; // 4.64968
     accMax = 0.008476;
-    fMax = 0.4; // 0.039411 
+    fMax = 0.04; // 0.039411 
 
     // float vTarg[3] = {0.5, 0, 0};
     // api.setVelocityTarget(vTarg);
@@ -63,48 +63,45 @@ void init()
 
 void loop()
 {
-    float target[3] = {0.5, 0.15, 0};    
-    moveFast(target);
-    
     // Updates state arrays of SPHEREs and items
     updateState();
 
-    // if (game.getNumSPSHeld() != 0) {
-    //     // Code for placing SPSs
-    //     int spsHeld = game.getNumSPSHeld();
+    if (game.getNumSPSHeld() != 0) {
+        // Code for placing SPSs
+        int spsHeld = game.getNumSPSHeld();
 
-    //     if (closeTo(myPos, spsLoc[3 - spsHeld], (spsHeld == 1) ? 0.03 : 0.03)) {
-    //         // If close to sps location, drop SPS and update SPS position array
-    //         // Large tolerance used (8 cm) because precision not needed and
-    //         // takes too long to slow down
-    //         // Small tolerance used for last SPS because it is right next to an item
-    //         game.dropSPS();
-    //         for (int i = 0; i < 3; i++) { spsLoc[3 - spsHeld][i] = myPos[i]; }
-    //         spsHeld--;
+        if (closeTo(myPos, spsLoc[3 - spsHeld], (spsHeld == 1) ? 0.03 : 0.03)) {
+            // If close to sps location, drop SPS and update SPS position array
+            // Large tolerance used (8 cm) because precision not needed and
+            // takes too long to slow down
+            // Small tolerance used for last SPS because it is right next to an item
+            game.dropSPS();
+            for (int i = 0; i < 3; i++) { spsLoc[3 - spsHeld][i] = myPos[i]; }
+            spsHeld--;
 
-    //         if (spsHeld == 0) {
-    //             // Save assembly zone location if no SPSs left
-    //             float ass[4];
-    //             game.getZone(ass);
-    //             for (int i = 0; i < 3; i++) { assemblyZone[i] = ass[i]; }
+            if (spsHeld == 0) {
+                // Save assembly zone location if no SPSs left
+                float ass[4];
+                game.getZone(ass);
+                for (int i = 0; i < 3; i++) { assemblyZone[i] = ass[i]; }
 
-    //             // If requirements of docking are satisfied, immediately dock (saves 1 second)
-    //             // float vectorBetween[3];
-    //             // mathVecSubtract(vectorBetween, itemPos[1], myPos, 3);
-    //             // if (mathVecMagnitude(myVel, 3) < 0.01 || mathVecMagnitude(vectorBetween, 3) < 0.173 || !isFacing(itemPos[1], 0.25) || mathVecMagnitude(vectorBetween, 3) > 0.151) {
-    //             //     game.dockItem(1);
-    //             //     itemHeld = 1;
-    //             // }
-    //         }
-    //     } else {
-    //         moveFast(spsLoc[3 - game.getNumSPSHeld()]);
-    //     }
-    // } else { // All SPSs are placed
-    //     if (itemHeld == 0){
-    //         nextItem = optimalItem();
-    //     }
-    //     dock(nextItem);
-    // }
+                // If requirements of docking are satisfied, immediately dock (saves 1 second)
+                // float vectorBetween[3];
+                // mathVecSubtract(vectorBetween, itemPos[1], myPos, 3);
+                // if (mathVecMagnitude(myVel, 3) < 0.01 || mathVecMagnitude(vectorBetween, 3) < 0.173 || !isFacing(itemPos[1], 0.25) || mathVecMagnitude(vectorBetween, 3) > 0.151) {
+                //     game.dockItem(1);
+                //     itemHeld = 1;
+                // }
+            }
+        } else {
+            moveFast(spsLoc[3 - game.getNumSPSHeld()]);
+        }
+    } else { // All SPSs are placed
+        if (itemHeld == 0){
+            nextItem = optimalItem();
+        }
+        dock(nextItem);
+    }
 }
 
 // MARK: Helper Methods
@@ -161,16 +158,15 @@ void moveFast(float target[3]) {
         float vPerpendicularMag = velocityMag * sinf(angleBetween(vectorBetween, myVel));
         float vParallelMag = velocityMag * cosf(angleBetween(vectorBetween, myVel)); 
 
-        DEBUG(("%f, %f, %f", myVel[0], myVel[1], myVel[2]));
-        DEBUG(("%f", angleBetween(vectorBetween, myVel)));
-
         // Calculate the forces required to travel to the target in optimal fuel/time ratio
-        float forcePerpendicularMagnitude = (-1 * vPerpendicularMag * vPerpendicularMag * mass) / (2 * dist);
+        float forcePerpendicularMagnitude = (-1.1 * vPerpendicularMag * vPerpendicularMag * mass) / (2 * dist);
         float forceParallelMagnitude = sqrtf(fMax * fMax - forcePerpendicularMagnitude * forcePerpendicularMagnitude);
         float accParallel = forceParallelMagnitude / mass;
-        if (dist < ((vParallelMag * vParallelMag) / (2 * accParallel))) {
+        if (dist < ((vParallelMag * vParallelMag) / (2 * accParallel * 0.5))) {
             forceParallelMagnitude *= -1;
         }
+        // float forceParallelMagnitude = -1 * vParallelMag * vParallelMag  (2 * dist * mass);
+        DEBUG(("%f", accParallel));
 
         // Find the direction of the velocity component that is perpendicular to vectorBetween
         float vTemp[3]; // myVel cross product vectorBetween, perpendicular to both
