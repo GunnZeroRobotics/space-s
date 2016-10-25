@@ -45,7 +45,7 @@ void init()
     spsLoc[0][0] = 0.15 * rB;
     spsLoc[0][1] = 0;
     spsLoc[0][2] = 0;
-    spsLoc[1][0] = -0.5 * rB;
+    spsLoc[1][0] = -0.6 * rB;
     spsLoc[1][1] = 0.3 * rB;
     spsLoc[1][2] = 0;
     spsLoc[2][0] = -0.39 * rB;
@@ -70,7 +70,7 @@ void loop()
         // Code for placing SPSs
         int spsHeld = game.getNumSPSHeld();
 
-        if (closeTo(myPos, spsLoc[3 - spsHeld], (spsHeld == 1) ? 0.03 : 0.03)) {
+        if (closeTo(myPos, spsLoc[3 - spsHeld], (spsHeld == 1) ? 0.08 : 0.15)) {
             // If close to sps location, drop SPS and update SPS position array
             // Large tolerance used (8 cm) because precision not needed and
             // takes too long to slow down
@@ -147,7 +147,7 @@ void moveFast(float target[3]) {
     float dist = mathVecMagnitude(vectorBetween, 3);
 
     // Use setPosition if very close to target b/c it is more accurate
-    if (dist < 0.1) {
+    if (dist < 0.03) {
         api.setPositionTarget(target);
     } else {
         // Magnitude of SPHERE's velocity
@@ -159,7 +159,7 @@ void moveFast(float target[3]) {
         float vParallelMag = velocityMag * cosf(angleBetween(vectorBetween, myVel)); 
 
         // Calculate the forces required to travel to the target
-        float forcePerpendicularMagnitude = (2 * vPerpendicularMag * vPerpendicularMag * mass) / (2 * dist);
+        float forcePerpendicularMagnitude = (10 * vPerpendicularMag * vPerpendicularMag * mass) / (2 * dist);
         float forceParallelMagnitude;
 
         if (forcePerpendicularMagnitude > fMax) { 
@@ -167,7 +167,7 @@ void moveFast(float target[3]) {
         } else {
             forceParallelMagnitude = sqrtf((fMax * fMax) - (forcePerpendicularMagnitude * forcePerpendicularMagnitude));
             float accParallel = forceParallelMagnitude / mass;
-            if (dist < ((vParallelMag * vParallelMag) / (2 * accParallel))) {
+            if (dist < ((vParallelMag * vParallelMag) / (accParallel * 0.5))) {
                 forceParallelMagnitude *= -1;
             }
         }
@@ -193,8 +193,6 @@ void moveFast(float target[3]) {
             forceTotal[i] = forceParallelVector[i] + forcePerpendicularVector[i];
         }
             
-        // DEBUG(("%f", vPerpendicularMag));
-        //DEBUG(("%f, %f, %f", forcePerpendicularMagnitude, forceParallelMagnitude, mathVecMagnitude(forceTotal, 3)));
         api.setForces(forceTotal);
     }
 }
@@ -249,7 +247,7 @@ void dock(int itemID)
             pointToward(assemblyZone);
         }
     } else {
-        float vectorTarget[3]; // Coordinates of target location to move to
+        float vectorTarget[3]; // Coordinates of target location to move to, closest face of 
 
         mathVecSubtract(vectorBetween, itemPos[itemID], myPos, 3);
 
