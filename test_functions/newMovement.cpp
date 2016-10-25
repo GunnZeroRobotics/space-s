@@ -55,7 +55,7 @@ void init()
     // Temporary values that are relatively accurate
     mass = 4.65; // 4.64968
     accMax = 0.008476;
-    fMax = 0.04; // 0.039411 
+    fMax = mass * accMax * 0.9;
 
     // float vTarg[3] = {0.5, 0, 0};
     // api.setVelocityTarget(vTarg);
@@ -158,15 +158,19 @@ void moveFast(float target[3]) {
         float vPerpendicularMag = velocityMag * sinf(angleBetween(vectorBetween, myVel));
         float vParallelMag = velocityMag * cosf(angleBetween(vectorBetween, myVel)); 
 
-        // Calculate the forces required to travel to the target in optimal fuel/time ratio
-        float forcePerpendicularMagnitude = (-1.1 * vPerpendicularMag * vPerpendicularMag * mass) / (2 * dist);
-        float forceParallelMagnitude = sqrtf(fMax * fMax - forcePerpendicularMagnitude * forcePerpendicularMagnitude);
-        float accParallel = forceParallelMagnitude / mass;
-        if (dist < ((vParallelMag * vParallelMag) / (2 * accParallel * 0.5))) {
-            forceParallelMagnitude *= -1;
+        // Calculate the forces required to travel to the target
+        float forcePerpendicularMagnitude = (2 * vPerpendicularMag * vPerpendicularMag * mass) / (2 * dist);
+        float forceParallelMagnitude;
+
+        if (forcePerpendicularMagnitude > fMax) { 
+            forceParallelMagnitude = 0;
+        } else {
+            forceParallelMagnitude = sqrtf((fMax * fMax) - (forcePerpendicularMagnitude * forcePerpendicularMagnitude));
+            float accParallel = forceParallelMagnitude / mass;
+            if (dist < ((vParallelMag * vParallelMag) / (2 * accParallel))) {
+                forceParallelMagnitude *= -1;
+            }
         }
-        // float forceParallelMagnitude = -1 * vParallelMag * vParallelMag  (2 * dist * mass);
-        DEBUG(("%f", accParallel));
 
         // Find the direction of the velocity component that is perpendicular to vectorBetween
         float vTemp[3]; // myVel cross product vectorBetween, perpendicular to both
@@ -185,7 +189,7 @@ void moveFast(float target[3]) {
         float forceTotal[3];
         for (int i = 0; i < 3; i++) {
             forceParallelVector[i] = vectorBetween[i] * forceParallelMagnitude;
-            forcePerpendicularVector[i] = vPerpendicular[i] * forcePerpendicularMagnitude; 
+            forcePerpendicularVector[i] = vPerpendicular[i] * forcePerpendicularMagnitude * -1;
             forceTotal[i] = forceParallelVector[i] + forcePerpendicularVector[i];
         }
             
