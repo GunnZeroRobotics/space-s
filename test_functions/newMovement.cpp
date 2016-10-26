@@ -147,7 +147,7 @@ void moveFast(float target[3]) {
     float dist = mathVecMagnitude(vectorBetween, 3);
 
     // Use setPosition if very close to target b/c it is more accurate
-    if (dist < 0.03) {
+    if (dist < 0.05) {
         api.setPositionTarget(target);
     } else {
         // Magnitude of SPHERE's velocity
@@ -172,10 +172,10 @@ void moveFast(float target[3]) {
                 // forceParallelMagnitude *= (33.33333 * (dist - 0.05));
             // }
             if (dist < 0.04) { forceParallelMagnitude *= -0.8; }
-            else if (dist < ((vParallelMag * vParallelMag) / (accParallel * 0.72))) {
+            else if (dist < ((vParallelMag * vParallelMag) / (accParallel * 0.65))) {
                 forceParallelMagnitude *= -1;
             } else {
-                forceParallelMagnitude *= 0.72;
+                forceParallelMagnitude *= 0.9;
             }
         }
 
