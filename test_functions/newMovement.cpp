@@ -48,7 +48,7 @@ void init()
     spsLoc[1][0] = -0.6 * rB;
     spsLoc[1][1] = 0.3 * rB;
     spsLoc[1][2] = 0;
-    spsLoc[2][0] = -0.39 * rB;
+    spsLoc[2][0] = -0.45 * rB;
     spsLoc[2][1] = -0.23 * rB;
     spsLoc[2][2] = -0.23 * rB;
     
@@ -159,7 +159,8 @@ void moveFast(float target[3]) {
         float vParallelMag = velocityMag * cosf(angleBetween(vectorBetween, myVel)); 
 
         // Calculate the forces required to travel to the target
-        float forcePerpendicularMagnitude = (10 * vPerpendicularMag * vPerpendicularMag * mass) / (2 * dist);
+        float forcePerpendicularMagnitude = (1.7 * vPerpendicularMag * vParallelMag * mass) / (dist);
+        // (1 * vPerpendicularMag * vPerpendicularMag * mass) / (2 * dist);
         float forceParallelMagnitude;
 
         if (forcePerpendicularMagnitude > fMax) { 
@@ -167,10 +168,18 @@ void moveFast(float target[3]) {
         } else {
             forceParallelMagnitude = sqrtf((fMax * fMax) - (forcePerpendicularMagnitude * forcePerpendicularMagnitude));
             float accParallel = forceParallelMagnitude / mass;
-            if (dist < ((vParallelMag * vParallelMag) / (accParallel * 0.5))) {
+            // if (dist < 0.08) {
+                // forceParallelMagnitude *= (33.33333 * (dist - 0.05));
+            // }
+            if (dist < ((vParallelMag * vParallelMag) / (accParallel * 0.72))) {
                 forceParallelMagnitude *= -1;
             }
         }
+
+        DEBUG(("dist: %f", dist));
+        DEBUG(("vel: %f, %f", vParallelMag, vPerpendicularMag));
+        DEBUG(("force: %f, %f", forceParallelMagnitude, forcePerpendicularMagnitude));
+        DEBUG(("-------------------------------------"));
 
         // Find the direction of the velocity component that is perpendicular to vectorBetween
         float vTemp[3]; // myVel cross product vectorBetween, perpendicular to both
