@@ -171,8 +171,11 @@ void moveFast(float target[3]) {
             // if (dist < 0.08) {
                 // forceParallelMagnitude *= (33.33333 * (dist - 0.05));
             // }
-            if (dist < ((vParallelMag * vParallelMag) / (accParallel * 0.72))) {
+            if (dist < 0.04) { forceParallelMagnitude *= -0.8; }
+            else if (dist < ((vParallelMag * vParallelMag) / (accParallel * 0.72))) {
                 forceParallelMagnitude *= -1;
+            } else {
+                forceParallelMagnitude *= 0.72;
             }
         }
 
