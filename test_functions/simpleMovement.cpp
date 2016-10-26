@@ -151,11 +151,14 @@ void moveFast(float target[3]) {
         if (perpForce < fMax) {
             parallelForce = sqrtf((fMax * fMax) - (perpForce * perpForce));
         }
-        if (dist < ((vParallelMag * vParallelMag) / (2 * accMax * accFactor() * 0.8))) {
+
+        float parallelAcc = parallelForce / mass;
+
+        if (dist < ((vParallelMag * vParallelMag) / (2 * parallelAcc * accFactor() * 0.8))) {
             parallelForce *= -1;
         } else {
             if (dist < 0.2) { parallelForce *= 0.1; }
-            else { parallelForce *= 0.8; }
+            else { parallelForce *= 0.75; }
         }
 
         float totalForce[3];
