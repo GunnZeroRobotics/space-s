@@ -175,7 +175,7 @@ void moveFast(float target[3]) {
             else if (dist < ((vParallelMag * vParallelMag) / (accParallel * 0.65))) {
                 forceParallelMagnitude *= -1;
             } else {
-                forceParallelMagnitude *= 0.9;
+                forceParallelMagnitude *= 0.88;
             }
         }
 
