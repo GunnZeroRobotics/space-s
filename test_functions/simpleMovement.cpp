@@ -28,15 +28,15 @@ int rB; //modifies SPS locations based on our starting position
 void init()
 {
     gameTime = 0;
-    
+
     game.dropSPS(); // drop SPS at spawn point
 
     // Set SPS locations
     // If there's a more consise way to set these please let me know - Kevin Li
     updateState();
     rB = (myPos[1] < 0) ? -1 : 1;
-    spsLoc[0][0] = 0.15 * rB;
-    spsLoc[0][1] = 0;
+    spsLoc[0][0] = 0;
+    spsLoc[0][1] = 0.15 * rB;
     spsLoc[0][2] = 0;
     spsLoc[1][0] = -0.5 * rB;
     spsLoc[1][1] = 0.3 * rB;
@@ -48,7 +48,7 @@ void init()
     // Temporary values that are relatively accurate
     mass = 4.65; // 4.64968
     accMax = 0.008476;
-    fMax = mass * accMax; // 0.039411 
+    fMax = mass * accMax; // 0.039411
 }
 
 void loop()
@@ -127,28 +127,31 @@ void moveFast(float target[3]) {
 
     float dist = mathVecMagnitude(vectorBetween, 3);
 
-    if (dist < 0.01) {
+    if (dist < 0.04) {
         api.setPositionTarget(target);
     } else {
         float velocityMag = mathVecMagnitude(myVel, 3);
 
         float vPerpMag = velocityMag * sinf(angleBetween(vectorBetween, myVel));
-        float vParallelMag = velocityMag * cosf(angleBetween(vectorBetween, myVel)); 
+        float vParallelMag = velocityMag * cosf(angleBetween(vectorBetween, myVel));
 
         // Find the direction of the velocity component that is perpendicular to vectorBetween
         float vTemp[3]; // myVel cross product vectorBetween, perpendicular to both
         mathVecCross(vTemp, myVel, vectorBetween);
         float vPerp[3]; // vectorBetween cross product result of above, gives perpendicular component of velocity
-        mathVecCross(vPerp, vectorBetween, vTemp); 
+        mathVecCross(vPerp, vectorBetween, vTemp);
 
         mathVecNormalize(vectorBetween, 3);
         mathVecNormalize(vPerp, 3);
 
         float perpForce = 0;
         float parallelForce = 0;
-        
+
         if (dist < ((vParallelMag * vParallelMag) / (2 * accMax * accFactor() * 0.85))) { // The second constant determines how early we should start decelerating
-            parallelForce = -0.97 * fMax; // This constant determines how fast we should slow down
+            parallelForce = -0.9 * fMax; // This constant determines how fast we should slow down
+            if ((mass * vPerpMag) < sqrtf((fMax * fMax) - (parallelForce * parallelForce))){
+                perpForce = mass * vPerpMag;
+            } else perpForce = sqrtf((fMax * fMax) - (parallelForce * parallelForce));
         } else {
             perpForce = mass * vPerpMag;
             if (perpForce < fMax) {
@@ -173,7 +176,7 @@ void moveFast(float target[3]) {
         DEBUG(("dist: %f", dist));
         DEBUG(("vel: %f, %f", vParallelMag, vPerpMag));
         DEBUG(("force: %f, %f", parallelForce, perpForce));
-        DEBUG(("-------------------------------------")); 
+        DEBUG(("-------------------------------------"));
 
         api.setForces(totalForce);
     }
@@ -269,10 +272,10 @@ int optimalItem()
 {
     int maxPtsID = 0;
     float maxPts = -1;
-    
+
     for (int itemID = 0; itemID < 6; itemID++) {
         // If the item is in our assembly zone, skip it
-        while (game.itemInZone(itemID)) { 
+        while (game.itemInZone(itemID)) {
             itemID++;
         }
         if (itemID > 5) { break; }
@@ -282,7 +285,7 @@ int optimalItem()
 
         float itemDist[3]; // Vector between SPHERE and item
         float zoneDist[3]; // Vector between item and assembly zone
-        
+
         // If opponent has the item, assume it's in their assembly zone
         if (game.hasItem(itemID) == 2) {
             float oppAss[3];
@@ -293,13 +296,13 @@ int optimalItem()
             mathVecSubtract(itemDist, itemPos[itemID], myPos, 3);
             mathVecSubtract(zoneDist, assemblyZone, itemPos[itemID], 3);
         }
-        
+
         float travelTime = mathVecMagnitude(itemDist, 3) + mathVecMagnitude(zoneDist, 3); // Replace this once we have an estimate for movement time
-        
+
         float timeInZone = 180 - gameTime - travelTime;
-        
+
         float itemPPS = (itemID < 2) ? 0.2 : ((itemID < 4) ? 0.15 : 0.1);
-        
+
         if (itemPPS * timeInZone > maxPts) {
             maxPts = itemPPS * timeInZone;
             maxPtsID = itemID;
