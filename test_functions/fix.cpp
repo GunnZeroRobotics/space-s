@@ -67,7 +67,6 @@ void loop()
             // Large tolerance used (8 cm) because precision not needed and takes too long to slow down
             // Small tolerance used for last SPS because it is right next to an item
             game.dropSPS();
-            for (int i = 0; i < 3; i++) { spsLoc[3 - spsHeld][i] = myPos[i]; }
             spsHeld--;
 
             if (spsHeld == 0) {
@@ -168,7 +167,7 @@ void moveFast(float target[3]) {
                     float perpForce = 0;
                     float parallelForce = 0;
 
-                    if (dist < ((vParallelMag * vParallelMag) / (2 * accMax * accFactor() * 0.85))) { // The second constant determines how early we should start decelerating
+                    if (dist < ((vParallelMag * vParallelMag) / (2 * accMax * getAccFactor() * 0.85))) { // The second constant determines how early we should start decelerating
                         parallelForce = -0.9 * fMax; // This constant determines how fast we should slow down
                         //if ((mass * vPerpMag) < sqrtf((fMax * fMax) - (parallelForce * parallelForce))){
                         //    perpForce = mass * vPerpMag;
@@ -208,19 +207,17 @@ void moveFast(float target[3]) {
     
 }
 
-float accFactor() {
-    float accFactor = 1;
-    switch (game.getNumSPSHeld()) {
-        case 1: accFactor *= (8.0 / 9.0);
-        case 2: accFactor *= (4.0 / 5.0);
-        default: accFactor *= 1;
-    }
+float getAccFactor() {
     for (int i = 0; i < 3; i++) {
-        if (game.hasItem(i * 2) || game.hasItem((i * 2) + 1)) {
-            accFactor *= ((i = 0) ? (8.0 / 11.0) : (i = 1) ? (4.0 / 5.0) : (8.0 / 9.0));
+        if (game.hasItem(i * 2) == 1 || game.hasItem((i * 2) + 1) == 1) {
+            return ((i == 0) ? (8.0 / 11.0) : (i == 1) ? (4.0 / 5.0) : (8.0 / 9.0));
         }
     }
-    return accFactor;
+    switch (game.getNumSPSHeld()) {
+        case 1: return (8.0 / 9.0);
+        case 2: return (4.0 / 5.0);
+        default: return 1.0; 
+    }
 }
 
 // Sets attitude toward a given point
@@ -239,10 +236,7 @@ float angleBetween(float vector1[3], float vector2[3]) {
 bool isFacing(float target[3], float tolerance) {
     float targetAtt[3];
     mathVecSubtract(targetAtt, target, myPos, 3);
-    mathVecNormalize(targetAtt, 3);
-    float theta;
-    theta = acosf(mathVecInner(targetAtt, myAtt, 3));
-    return theta < tolerance;
+    return (angleBetween(myAtt, targetAtt) < tolerance);
 }
 
 void dock(int itemID)
