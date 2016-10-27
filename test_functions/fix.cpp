@@ -62,10 +62,9 @@ void loop()
         // Code for placing SPSs
         int spsHeld = game.getNumSPSHeld();
 
-        if (closeTo(myPos, spsLoc[3 - spsHeld], (spsHeld == 1) ? 0.03 : 0.02)) {
+        if (closeTo(myPos, spsLoc[3 - spsHeld], (spsHeld == 1) ? 0.03 : 0.08)) {
             // If close to sps location, drop SPS and update SPS position array
-            // Large tolerance used (8 cm) because precision not needed and
-            // takes too long to slow down
+            // Large tolerance used (8 cm) because precision not needed and takes too long to slow down
             // Small tolerance used for last SPS because it is right next to an item
             game.dropSPS();
             for (int i = 0; i < 3; i++) { spsLoc[3 - spsHeld][i] = myPos[i]; }
@@ -79,7 +78,7 @@ void loop()
                 dock(optimalItem());
             }
         } else {
-            moveForce(spsLoc[3 - game.getNumSPSHeld()]);
+            moveFast(spsLoc[3 - game.getNumSPSHeld()]);
         }
     } else { // All SPSs are placed
         dock(optimalItem());
@@ -121,96 +120,93 @@ bool closeTo(float vec[3], float target[3], float tolerance) {
 }
 
 // Checks if SPHERES is ____ away from target location -- if so, use setVelocity, else, use setPosition
-void moveForce(float target[3]) {
+void moveFast(float target[3]) {
     float vectorBetween[3];
     mathVecSubtract(vectorBetween, target, myPos, 3);
-
     float dist = mathVecMagnitude(vectorBetween, 3);
-
-    if (dist < 0.03) {
-        api.setPositionTarget(target);
-    } else {
-        float velocityMag = mathVecMagnitude(myVel, 3);
-
-        float vPerpMag = velocityMag * sinf(angleBetween(vectorBetween, myVel));
-        float vParallelMag = velocityMag * cosf(angleBetween(vectorBetween, myVel));
-
-        // Find the direction of the velocity component that is perpendicular to vectorBetween
-        float vTemp[3]; // myVel cross product vectorBetween, perpendicular to both
-        mathVecCross(vTemp, myVel, vectorBetween);
-        float vPerp[3]; // vectorBetween cross product result of above, gives perpendicular component of velocity
-        mathVecCross(vPerp, vectorBetween, vTemp);
-
-        mathVecNormalize(vectorBetween, 3);
-        mathVecNormalize(vPerp, 3);
-
-        float perpForce = 0;
-        float parallelForce = 0;
-
-        if (dist < ((vParallelMag * vParallelMag) / (2 * accMax * accFactor() * 0.85))) { // The second constant determines how early we should start decelerating
-            parallelForce = -0.9 * fMax; // This constant determines how fast we should slow down
-            if ((mass * vPerpMag) < sqrtf((fMax * fMax) - (parallelForce * parallelForce))){
-                perpForce = mass * vPerpMag;
-            } else perpForce = sqrtf((fMax * fMax) - (parallelForce * parallelForce));
-        } else {
-            perpForce = mass * vPerpMag;
-            if (perpForce < fMax) {
-                parallelForce = sqrtf((fMax * fMax) - (perpForce * perpForce));
-            }
-            // Tried to fix overshooting with constants. It sucks.
-            // if (vParallelMag > 0.06) { parallelForce *= 0.25; }
-            // else if (dist < 0.02) { parallelForce = 0; }
-            // else if (dist < 0.05) { parallelForce *= 0.25; }
-            // else if (dist < 0.15 && vParallelMag > 0.03) { parallelForce *= 0.25; }
-            // else if (dist < 0.25 && vParallelMag > 0.05) { parallelForce *= 0.25; }
-            // else { parallelForce *= 0.95; }
-        }
-
-        float totalForce[3];
-        for (int i = 0; i < 3; i++) {
-            vPerp[i] *= (perpForce * -1);
-            vectorBetween[i] *= parallelForce;
-            totalForce[i] = vPerp[i] + vectorBetween[i];
-        }
-
-        DEBUG(("dist: %f", dist));
-        DEBUG(("vel: %f, %f", vParallelMag, vPerpMag));
-        DEBUG(("force: %f, %f", parallelForce, perpForce));
-        DEBUG(("-------------------------------------"));
-
-        api.setForces(totalForce);
-    }
-}
-
-void moveFast(float target[3]) {
-    // api.setPositionTarget(target);
-    float dist;
-    float temp[3];
-    int n;
-
-    mathVecSubtract(temp, target, myPos, 3);
-    dist = mathVecNormalize(temp, 3);
 
     float velocityMag = mathVecMagnitude(myVel, 3);
 
-    if (velocityMag > 0.09) {  // Distance between SPHERE and target location
-        float zero[3] = {0, 0, 0};
-        DEBUG(("too fast 5 u"));
-        // float dist = mathVecMagnitude(vectorBetween, 3);
-        api.setVelocityTarget(zero);
-        return;
-    }
-    
-    // Not sure who changed values inside of if statment & added for loop - Larry
-    if (dist > 0.5 * 0.01 * 36 + mathVecMagnitude(myPos + 3, 3) * 6) {
-        for (n = 0; n < 3; n++) { //scale velocity (disp) to speed
-            temp[n] *= dist;
-        }
-        api.setVelocityTarget(temp);
-    } else {
-        api.setPositionTarget(target);
+    switch (game.getNumSPSHeld()) {
+        case 0: 
+
+                //if (velocityMag > 0.09) {  // Distance between SPHERE and target location
+                //    float zero[3] = {0, 0, 0};
+                //    DEBUG(("too fast 5 u"));
+                    // float dist = mathVecMagnitude(vectorBetween, 3);
+                //    api.setVelocityTarget(zero);
+                //    return;
+                //}
+                
+                // Not sure who changed values inside of if statment & added for loop - Larry
+                if (dist > 0.5 * 0.01 * 36 + mathVecMagnitude(myPos + 3, 3) * 6) {
+                    for (int n = 0; n < 3; n++) { //scale velocity (disp) to speed
+                        vectorBetween[n] *= dist;
+                    }
+                    api.setVelocityTarget(vectorBetween);
+                } else {
+                    api.setPositionTarget(target);
+                }
+                break;
+        default: 
+                if (dist < 0.03) {
+                    api.setPositionTarget(target);
+                } else {
+
+                    float vPerpMag = velocityMag * sinf(angleBetween(vectorBetween, myVel));
+                    float vParallelMag = velocityMag * cosf(angleBetween(vectorBetween, myVel));
+
+                    // Find the direction of the velocity component that is perpendicular to vectorBetween
+                    float vTemp[3]; // myVel cross product vectorBetween, perpendicular to both
+                    mathVecCross(vTemp, myVel, vectorBetween);
+                    float vPerp[3]; // vectorBetween cross product result of above, gives perpendicular component of velocity
+                    mathVecCross(vPerp, vectorBetween, vTemp);
+
+                    mathVecNormalize(vectorBetween, 3);
+                    mathVecNormalize(vPerp, 3);
+
+                    float perpForce = 0;
+                    float parallelForce = 0;
+
+                    if (dist < ((vParallelMag * vParallelMag) / (2 * accMax * accFactor() * 0.85))) { // The second constant determines how early we should start decelerating
+                        parallelForce = -0.9 * fMax; // This constant determines how fast we should slow down
+                        //if ((mass * vPerpMag) < sqrtf((fMax * fMax) - (parallelForce * parallelForce))){
+                        //    perpForce = mass * vPerpMag;
+                        //} else perpForce = sqrtf((fMax * fMax) - (parallelForce * parallelForce));
+                    } else {
+                        perpForce = mass * vPerpMag;
+                        if (perpForce < fMax) {
+                            parallelForce = sqrtf((fMax * fMax) - (perpForce * perpForce));
+                        }
+                        // Tried to fix overshooting with constants. It sucks.
+                        // if (vParallelMag > 0.06) { parallelForce *= 0.25; }
+                        // else if (dist < 0.02) { parallelForce = 0; }
+                        // else if (dist < 0.05) { parallelForce *= 0.25; }
+                        // else if (dist < 0.15 && vParallelMag > 0.03) { parallelForce *= 0.25; }
+                        // else if (dist < 0.25 && vParallelMag > 0.05) { parallelForce *= 0.25; }
+                        // else { parallelForce *= 0.95; }
+                    }
+
+                    float totalForce[3];
+                    for (int i = 0; i < 3; i++) {
+                        vPerp[i] *= (perpForce * -1);
+                        vectorBetween[i] *= parallelForce;
+                        totalForce[i] = vPerp[i] + vectorBetween[i];
+                    }
+
+                    //DEBUG(("dist: %f", dist));
+                    //DEBUG(("vel: %f, %f", vParallelMag, vPerpMag));
+                    //DEBUG(("force: %f, %f", parallelForce, perpForce));
+                    //DEBUG(("-------------------------------------"));
+
+                    api.setForces(totalForce);
+                }
+                break;
+
     }
 
+    
+}
 
 float accFactor() {
     float accFactor = 1;
