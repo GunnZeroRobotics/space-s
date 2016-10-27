@@ -125,13 +125,10 @@ void moveFast(float target[3]) {
     float dist = mathVecMagnitude(vectorBetween, 3);
 
     float velocityMag = mathVecMagnitude(myVel, 3);
-
     switch (game.getNumSPSHeld()) {
         case 0: 
-
                 if (velocityMag > 0.09) {  // Distance between SPHERE and target location
                     float zero[3] = {0, 0, 0};
-                    DEBUG(("too fast 5 u"));
                     // float dist = mathVecMagnitude(vectorBetween, 3);
                     api.setVelocityTarget(zero);
                     return;
