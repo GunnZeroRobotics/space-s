@@ -127,7 +127,7 @@ void moveFast(float target[3]) {
 
     float dist = mathVecMagnitude(vectorBetween, 3);
 
-    if (dist < 0.03) {
+    if (dist < 0.01) {
         api.setPositionTarget(target);
     } else {
         float velocityMag = mathVecMagnitude(myVel, 3);
@@ -147,18 +147,20 @@ void moveFast(float target[3]) {
         float perpForce = 0;
         float parallelForce = 0;
         
-        perpForce = mass * vPerpMag;
-        if (perpForce < fMax) {
-            parallelForce = sqrtf((fMax * fMax) - (perpForce * perpForce));
-        }
-
-        float parallelAcc = parallelForce / mass;
-
-        if (dist < ((vParallelMag * vParallelMag) / (2 * parallelAcc * accFactor() * 0.8))) {
-            parallelForce *= -1;
+        if (dist < ((vParallelMag * vParallelMag) / (2 * accMax * accFactor() * 0.85))) { // The second constant determines how early we should start decelerating
+            parallelForce = -0.97 * fMax; // This constant determines how fast we should slow down
         } else {
-            if (dist < 0.2) { parallelForce *= 0.1; }
-            else { parallelForce *= 0.75; }
+            perpForce = mass * vPerpMag;
+            if (perpForce < fMax) {
+                parallelForce = sqrtf((fMax * fMax) - (perpForce * perpForce));
+            }
+            // Tried to fix overshooting with constants. It sucks.
+            // if (vParallelMag > 0.06) { parallelForce *= 0.25; }
+            // else if (dist < 0.02) { parallelForce = 0; }
+            // else if (dist < 0.05) { parallelForce *= 0.25; }
+            // else if (dist < 0.15 && vParallelMag > 0.03) { parallelForce *= 0.25; }
+            // else if (dist < 0.25 && vParallelMag > 0.05) { parallelForce *= 0.25; }
+            // else { parallelForce *= 0.95; }
         }
 
         float totalForce[3];
@@ -226,7 +228,7 @@ void dock(int itemID)
     // TODO: This needs to be improved. Looking for ideas. Post in slack.
     // Note: You do not have to stop/slow down to drop an item
     if (game.hasItem(itemID) == 1) {
-        if (closeTo(myPos, assemblyZone, avgDockingDist) && isFacing(assemblyZone, (3.14 / 6.0))) {
+        if (closeTo(myPos, assemblyZone, avgDockingDist) && isFacing(assemblyZone, (3.14 / 8.0))) {
             game.dropItem();
         }
         else {
