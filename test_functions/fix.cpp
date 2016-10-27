@@ -130,13 +130,13 @@ void moveFast(float target[3]) {
     switch (game.getNumSPSHeld()) {
         case 0: 
 
-                //if (velocityMag > 0.09) {  // Distance between SPHERE and target location
-                //    float zero[3] = {0, 0, 0};
-                //    DEBUG(("too fast 5 u"));
+                if (velocityMag > 0.09) {  // Distance between SPHERE and target location
+                    float zero[3] = {0, 0, 0};
+                    DEBUG(("too fast 5 u"));
                     // float dist = mathVecMagnitude(vectorBetween, 3);
-                //    api.setVelocityTarget(zero);
-                //    return;
-                //}
+                    api.setVelocityTarget(zero);
+                    return;
+                }
                 
                 // Not sure who changed values inside of if statment & added for loop - Larry
                 if (dist > 0.5 * 0.01 * 36 + mathVecMagnitude(myPos + 3, 3) * 6) {
