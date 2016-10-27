@@ -1,10 +1,9 @@
-// CURRENT VERSION:
-// Averages ~30 points per game without an opponent
-//
-// General TODOs:
-// Replace all setPositionTarget with moveFast once it is completed
-//
-// Function/line specific TODOs commented on their corresponding lines
+// Temporary values that are relatively accurate
+float accMax;
+float mass;
+float fMax;
+
+int gameTime;
 
 // myState variables
 float myPos[3];
@@ -24,28 +23,38 @@ float assemblyZone[3]; // x, y, z coordinates of assembly zone
 
 float spsLoc[3][3]; // spsLoc[sps drop number][x/y/z coordinate]
 
-float totalDist; // total distance to an item
-float minDist; // distance where sphere switches to setPositionTarget
-float forces[3]; // force vector
+int rB; //modifies SPS locations based on our starting position
+
 void init()
 {
+    gameTime = 0;
+
     game.dropSPS(); // drop SPS at spawn point
-    totalDist = 0;
+
     // Set SPS locations
     // If there's a more consise way to set these please let me know - Kevin Li
-    spsLoc[0][0] = 0.15;
-    spsLoc[0][1] = 0;
+    updateState();
+    rB = (myPos[1] < 0) ? -1 : 1;
+    spsLoc[0][0] = 0;
+    spsLoc[0][1] = 0.15 * rB;
     spsLoc[0][2] = 0;
-    spsLoc[1][0] = -0.5;
-    spsLoc[1][1] = 0.3;
+    spsLoc[1][0] = -0.5 * rB;
+    spsLoc[1][1] = 0.3 * rB;
     spsLoc[1][2] = 0;
-    spsLoc[2][0] = -0.39;
-    spsLoc[2][1] = -0.23;
-    spsLoc[2][2] = -0.23;
+    spsLoc[2][0] = -0.39 * rB;
+    spsLoc[2][1] = -0.23 * rB;
+    spsLoc[2][2] = -0.23 * rB;
+
+    // Temporary values that are relatively accurate
+    mass = 4.65; // 4.64968
+    accMax = 0.008476;
+    fMax = mass * accMax; // 0.039411
 }
 
 void loop()
 {
+    gameTime++;
+
     // Updates state arrays of SPHEREs and items
     updateState();
 
@@ -55,11 +64,9 @@ void loop()
 
         if (closeTo(myPos, spsLoc[3 - spsHeld], (spsHeld == 1) ? 0.03 : 0.08)) {
             // If close to sps location, drop SPS and update SPS position array
-            // Large tolerance used (8 cm) because precision not needed and
-            // takes too long to slow down
+            // Large tolerance used (8 cm) because precision not needed and takes too long to slow down
             // Small tolerance used for last SPS because it is right next to an item
             game.dropSPS();
-            totalDist = 0;
             for (int i = 0; i < 3; i++) { spsLoc[3 - spsHeld][i] = myPos[i]; }
             spsHeld--;
 
@@ -68,39 +75,13 @@ void loop()
                 float ass[4];
                 game.getZone(ass);
                 for (int i = 0; i < 3; i++) { assemblyZone[i] = ass[i]; }
-
-                // If requirements of docking are satisfied, immediately dock (saves 1 second)
-                float vectorBetween[3];
-                mathVecSubtract(vectorBetween, itemPos[1], myPos, 3);
-                if (mathVecMagnitude(myVel, 3) < 0.01 || mathVecMagnitude(vectorBetween, 3) < 0.173 || !isFacing(itemPos[1], 0.25) || mathVecMagnitude(vectorBetween, 3) > 0.151) {
-                    game.dockItem(1);
-                }
+                dock(optimalItem());
             }
         } else {
             moveFast(spsLoc[3 - game.getNumSPSHeld()]);
         }
-    } else {
-        // All SPSs are placed, docking and assembly code
-        // Iterates through the items that are already in our assembly zone,
-        // Docks with priority of large --> medium
-        // Small items excluded due to lack of time (most likely)
-        // If all large and medium items are already in our assembly zone, this
-        // enters an infinite loop. (Is that case possible???)
-
-        // TODO: Replace item selection with optimalItem function once it is complete
-        // Note: optimalItem probably requires moveFast -- correct me if I am wrong
-        int IDcount = 1;
-        while (game.itemInZone(IDcount)) {
-            if (game.hasItem(IDcount) == 1) {
-                break;
-            }
-            IDcount--;
-            if (IDcount < 0) {
-                IDcount = 3;
-            }
-        }
-
-        dock(IDcount);
+    } else { // All SPSs are placed
+        dock(optimalItem());
     }
 }
 
@@ -138,54 +119,93 @@ bool closeTo(float vec[3], float target[3], float tolerance) {
     return mathVecMagnitude(diff, 3) < tolerance;
 }
 
-// moveFast Function using Forces: accelerates halfway to the given target, then decelerates to the point.
+// Checks if SPHERES is ____ away from target location -- if so, use setVelocity, else, use setPosition
 void moveFast(float target[3]) {
-    float dist; // current distance from target
-    float temp[3]; // temp vector for calculations setting forces
-    mathVecSubtract(temp, target, myPos, 3);
-    dist = mathVecNormalize(temp, 3);
+    float vectorBetween[3];
+    mathVecSubtract(vectorBetween, target, myPos, 3);
+    float dist = mathVecMagnitude(vectorBetween, 3);
 
-    if (totalDist == 0) { // initial setup
-        // sets the totalDist to the dist found above = Total Distance needed to travel
-        // sets minDist = dist – minDist is the minimum distance to the point the sphere has reached
-        totalDist = minDist = dist;
-        // set the force vector
-        forces[0] = temp[0];
-        forces[1] = temp[1];
-        forces[2] = temp[2];
-        // reset forces – doesnt rlly work, if theres another way let me (@myh1000) know or just comment this out if we're using the circumscribe method.
-        temp[0] = temp[1] = temp[2] = 0;
-        api.setForces(temp);
-        DEBUG(("totalDist = %f",totalDist));
-    }
-    // minDist represents when the sphere decelerates to a point where setPositionTarget is better
-    if (dist < minDist) {
-        minDist = dist;
+    float velocityMag = mathVecMagnitude(myVel, 3);
+
+    switch (game.getNumSPSHeld()) {
+        case 0: 
+
+                if (velocityMag > 0.09) {  // Distance between SPHERE and target location
+                    float zero[3] = {0, 0, 0};
+                    DEBUG(("too fast 5 u"));
+                    // float dist = mathVecMagnitude(vectorBetween, 3);
+                    api.setVelocityTarget(zero);
+                    return;
+                }
+                
+                // Not sure who changed values inside of if statment & added for loop - Larry
+                if (dist > 0.5 * 0.01 * 36 + mathVecMagnitude(myPos + 3, 3) * 6) {
+                    for (int n = 0; n < 3; n++) { //scale velocity (disp) to speed
+                        vectorBetween[n] *= dist;
+                    }
+                    api.setVelocityTarget(vectorBetween);
+                } else {
+                    api.setPositionTarget(target);
+                }
+                break;
+        default: 
+                if (dist < 0.03) {
+                    api.setPositionTarget(target);
+                } else {
+
+                    float vPerpMag = velocityMag * sinf(angleBetween(vectorBetween, myVel));
+                    float vParallelMag = velocityMag * cosf(angleBetween(vectorBetween, myVel));
+
+                    // Find the direction of the velocity component that is perpendicular to vectorBetween
+                    float vTemp[3]; // myVel cross product vectorBetween, perpendicular to both
+                    mathVecCross(vTemp, myVel, vectorBetween);
+                    float vPerp[3]; // vectorBetween cross product result of above, gives perpendicular component of velocity
+                    mathVecCross(vPerp, vectorBetween, vTemp);
+
+                    mathVecNormalize(vectorBetween, 3);
+                    mathVecNormalize(vPerp, 3);
+
+                    float perpForce = 0;
+                    float parallelForce = 0;
+
+                    if (dist < ((vParallelMag * vParallelMag) / (2 * accMax * 0.85))) { // The second constant determines how early we should start decelerating
+                        parallelForce = -0.9 * fMax; // This constant determines how fast we should slow down
+                        //if ((mass * vPerpMag) < sqrtf((fMax * fMax) - (parallelForce * parallelForce))){
+                        //    perpForce = mass * vPerpMag;
+                        //} else perpForce = sqrtf((fMax * fMax) - (parallelForce * parallelForce));
+                    } else {
+                        perpForce = mass * vPerpMag;
+                        if (perpForce < fMax) {
+                            parallelForce = sqrtf((fMax * fMax) - (perpForce * perpForce));
+                        }
+                        // Tried to fix overshooting with constants. It sucks.
+                        // if (vParallelMag > 0.06) { parallelForce *= 0.25; }
+                        // else if (dist < 0.02) { parallelForce = 0; }
+                        // else if (dist < 0.05) { parallelForce *= 0.25; }
+                        // else if (dist < 0.15 && vParallelMag > 0.03) { parallelForce *= 0.25; }
+                        // else if (dist < 0.25 && vParallelMag > 0.05) { parallelForce *= 0.25; }
+                        // else { parallelForce *= 0.95; }
+                    }
+
+                    float totalForce[3];
+                    for (int i = 0; i < 3; i++) {
+                        vPerp[i] *= (perpForce * -1);
+                        vectorBetween[i] *= parallelForce;
+                        totalForce[i] = vPerp[i] + vectorBetween[i];
+                    }
+
+                    //DEBUG(("dist: %f", dist));
+                    //DEBUG(("vel: %f, %f", vParallelMag, vPerpMag));
+                    //DEBUG(("force: %f, %f", parallelForce, perpForce));
+                    //DEBUG(("-------------------------------------"));
+
+                    api.setForces(totalForce);
+                }
+                break;
+
     }
 
-    DEBUG(("dist = %f; %f, %f",dist, totalDist, minDist));
-    if (dist > totalDist / 2) { // not halfway there yet; accelerates
-        DEBUG(("accelerating, dist = %f",dist));
-        DEBUG(("accelerating, totalDist/2 = %f",totalDist / 2)); // halfway point, decelerates when distance < totalDist/2
-        api.setForces(forces);
-    }
-    else if (dist <= minDist) { // past halfway point; decelerates
-        DEBUG(("decelerating, dist = %f", dist));
-        // make the force vector point in the opposite direciton
-        for (int n = 0; n < 3; n++) {
-            temp[n] = forces[n] * -1;
-        }
-        api.setForces(temp); // slows it down by a set amount
-    }
-    /* when dist is > minDist, that means the sphere has started to move backwards a bit.
-    Sphere has slowed down considerably, use setPositionTarget */
-    else {
-        minDist = 0; // so this else statement is always called after the first time
-        // might be unnecessary if setPositionTarget overrides any forces
-        temp[0] = temp[1] = temp[2] = 0;
-        api.setForces(temp);
-        api.setPositionTarget(target);
-    }
+    
 }
 
 // Sets attitude toward a given point
@@ -194,6 +214,10 @@ void pointToward(float target[3]) {
     mathVecSubtract(vectorBetween, target, myPos, 3);
     mathVecNormalize(vectorBetween, 3);
     api.setAttitudeTarget(vectorBetween);
+}
+
+float angleBetween(float vector1[3], float vector2[3]) {
+    return acosf(mathVecInner(vector1, vector2, 3) / (mathVecMagnitude(vector1, 3) * mathVecMagnitude(vector2, 3)));
 }
 
 // Checks if SPHERE is facing a target point with tolerance (in radians)
@@ -220,7 +244,6 @@ void dock(int itemID)
     if (game.hasItem(itemID) == 1) {
         if (closeTo(myPos, assemblyZone, avgDockingDist) && isFacing(assemblyZone, (3.14 / 6.0))) {
             game.dropItem();
-            totalDist = 0;
         }
         else {
             // Set position to assemblyZone's position scaled down by dockingDist
@@ -249,14 +272,54 @@ void dock(int itemID)
             moveFast(vectorTarget);
             pointToward(itemPos[itemID]);
         } else {
-            totalDist = 0;
             game.dockItem(itemID);
         }
     }
 }
 
-// TODO: Write this function.
-// Do testing in a separate file (use template.cpp)
+// TODO: Add weight for stealing
 // Return the itemID of the best item to dock with
-// I think this requires moveFast to be completed -- Kevin Li
-int optimalItem() { return 0; }
+int optimalItem()
+{
+    int maxPtsID = 0;
+    float maxPts = -1;
+
+    for (int itemID = 0; itemID < 6; itemID++) {
+        // If the item is in our assembly zone, skip it
+        while (game.itemInZone(itemID)) {
+            itemID++;
+        }
+        if (itemID > 5) { break; }
+
+        // If we're holding an item, return that item
+        if (game.hasItem(itemID) == 1) { return itemID; }
+
+        float itemDist[3]; // Vector between SPHERE and item
+        float zoneDist[3]; // Vector between item and assembly zone
+
+        // If opponent has the item, assume it's in their assembly zone
+        if (game.hasItem(itemID) == 2) {
+            float oppAss[3];
+            for (int i = 0; i < 3; i++) { oppAss[i] = assemblyZone[i] * -1; }
+            mathVecSubtract(itemDist, oppAss, myPos, 3);
+            mathVecSubtract(zoneDist, assemblyZone, oppAss, 3);
+        }  else {
+            mathVecSubtract(itemDist, itemPos[itemID], myPos, 3);
+            mathVecSubtract(zoneDist, assemblyZone, itemPos[itemID], 3);
+        }
+
+        float travelTime = mathVecMagnitude(itemDist, 3) + mathVecMagnitude(zoneDist, 3); // Replace this once we have an estimate for movement time
+
+        float timeInZone = 180 - gameTime - travelTime;
+
+        float itemPPS = (itemID < 2) ? 0.2 : ((itemID < 4) ? 0.15 : 0.1);
+
+        if (itemPPS * timeInZone > maxPts) {
+            maxPts = itemPPS * timeInZone;
+            maxPtsID = itemID;
+        }
+
+    }
+
+    return maxPtsID;
+}
