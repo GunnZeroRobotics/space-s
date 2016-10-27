@@ -213,10 +213,7 @@ float angleBetween(float vector1[3], float vector2[3]) {
 bool isFacing(float target[3], float tolerance) {
     float targetAtt[3];
     mathVecSubtract(targetAtt, target, myPos, 3);
-    mathVecNormalize(targetAtt, 3);
-    float theta;
-    theta = acosf(mathVecInner(targetAtt, myAtt, 3));
-    return theta < tolerance;
+    return angleBetween(myAtt, targetAtt) < tolerance;
 }
 
 void dock(int itemID)
