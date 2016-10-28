@@ -1,5 +1,3 @@
-int gameTime;
-
 float myPos[3], myVel[3], myAtt[3];
 
 // Currently not in use; uncomment these and their corresponding lines in the update method if needed
@@ -15,7 +13,6 @@ float accFactor; // factor to multiply accMax by if holding items/SPSs, currentl
 int rB; // -1 = red, 1 = blue
 
 void init() {
-    gameTime = 0;
     mass = 4.65; // 4.64968
     accMax = 0.008476;
     fMax = mass * accMax; // 0.039411
@@ -159,10 +156,10 @@ void moveFast(float target[3]) {
             totalForce[i] = (vPerp[i] * perpForce * -1) + (vectorBetween[i] * parallelForce);
         }
 
-        DEBUG(("dist: %f", dist));
-        DEBUG(("vel: %f, %f", vParallelMag, vPerpMag));
-        DEBUG(("force: %f, %f", parallelForce, perpForce));
-        DEBUG(("-------------------------------------"));
+        // DEBUG(("dist: %f", dist));
+        // DEBUG(("vel: %f, %f", vParallelMag, vPerpMag));
+        // DEBUG(("force: %f, %f", parallelForce, perpForce));
+        // DEBUG(("-------------------------------------"));
 
         api.setForces(totalForce);
     }
@@ -196,8 +193,6 @@ float angleBetween(float vector1[3], float vector2[3]) {
 
 // Updates gameTime, SPHERE states, and item locations
 void update() {
-    gameTime++;
-
     float myState[12];
     // float otherState[12];
 
@@ -233,10 +228,9 @@ int optimalItem() {
         if (game.hasItem(itemID) == 1) { return itemID; }
 
         // If the item is in our assembly zone, skip it
-        while (game.itemInZone(itemID)) {
-            itemID++;
+        if (game.itemInZone(itemID)) {
+            continue;
         }
-        if (itemID > 5) { break; }
 
         float itemDist[3]; // Vector between SPHERE and item
         float zoneDist[3]; // Vector between item and assembly zone
@@ -256,8 +250,10 @@ int optimalItem() {
 
         float itemPPS = (itemID < 2) ? 0.2 : ((itemID < 4) ? 0.15 : 0.1);
 
-        if (itemPPS * (180 - gameTime - travelTime) > maxPts) {
-            maxPts = itemPPS * (180 - gameTime - travelTime);
+        int timeInZone = 180 - api.getTime() - travelTime;
+
+        if (itemPPS * timeInZone > maxPts) {
+            maxPts = itemPPS * timeInZone;
             maxPtsID = itemID;
         }
     }
