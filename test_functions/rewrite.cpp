@@ -251,13 +251,12 @@ int optimalItem() {
 
         float itemPPS = (itemID < 2) ? 0.2 : ((itemID < 4) ? 0.15 : 0.1);
 
-        int timeInZone = 180 - api.getTime() - travelTime;
+        float timeInZone = 180 - api.getTime() - travelTime;
 
         if (itemPPS * timeInZone > maxPts) {
             maxPts = itemPPS * timeInZone;
             maxPtsID = itemID;
         }
     }
-    // DEBUG(("%d", maxPtsID));
     return maxPtsID;
 }
