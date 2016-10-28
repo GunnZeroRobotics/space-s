@@ -54,7 +54,7 @@ void loop() {
             game.getZone(aZ);
             for (int i = 0; i < 3; i++) { 
                 assemblyZone[i] = aZ[i]; 
-                otherAss = assemblyZone[i] * -1;
+                otherAss[i] = assemblyZone[i] * -1;
             }
 
             // Start docking
@@ -241,11 +241,9 @@ int optimalItem() {
         float zoneDist[3]; // Vector between item and assembly zone
 
         // If opponent has the item, assume it's in their assembly zone
-        if (game.hasItem(itemID) == 2 && dist(oppAss, otherPos) < dist(oppAss, myPos)) {
-            float oppAss[3];
-            for (int i = 0; i < 3; i++) { oppAss[i] = assemblyZone[i] * -1; }
-            mathVecSubtract(itemDist, oppAss, myPos, 3);
-            mathVecSubtract(zoneDist, assemblyZone, oppAss, 3);
+        if (game.hasItem(itemID) == 2 && dist(otherAss, otherPos) < dist(otherAss, myPos)) {
+            mathVecSubtract(itemDist, otherAss, myPos, 3);
+            mathVecSubtract(zoneDist, assemblyZone, otherAss, 3);
         } else if (game.hasItem(itemID == 2)) {
             continue;
         }  else {
