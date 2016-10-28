@@ -252,7 +252,7 @@ int optimalItem() {
         float zoneDist[3]; // Vector between item and assembly zone
 
         // If opponent has the item, assume it's in their assembly zone
-        if (game.hasItem(itemID) == 2 && dist(otherAss, otherPos) < dist(otherAss, myPos)) {
+        if (game.hasItem(itemID) == 2 && dist(otherAss, otherPos) < dist(otherAss, myPos) && mathVecMagnitude(myVel, 3) < 0.01) {
             mathVecSubtract(itemDist, otherAss, myPos, 3);
             mathVecSubtract(zoneDist, assemblyZone, otherAss, 3);
         } else if (game.hasItem(itemID == 2)) {
