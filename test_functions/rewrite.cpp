@@ -75,7 +75,6 @@ void dock(int itemID) {
 
     // If you are holding the item, put it in your assembly zone
     if (game.hasItem(itemID) == 1) {
-
         mathVecSubtract(vectorBetween, assemblyZone, myPos, 3);
         float dist = mathVecMagnitude(vectorBetween, 3);
 
@@ -104,9 +103,9 @@ void dock(int itemID) {
             moveFast(targetPos);
             pointToward(itemPos[itemID]);
         } else {
-            bool successfulDocking = game.dockItem(itemID);
-            float accWithItem = (itemID < 2) ? (8.0 / 11.0) : ((itemID < 4) ? (4.0 / 5.0) : (8.0 / 9.0));
-            if (successfulDocking) { accFactor *= accWithItem; }
+            if (game.dockItem(itemID)) {
+                accFactor = (itemID < 2) ? (8.0 / 11.0) : ((itemID < 4) ? (4.0 / 5.0) : (8.0 / 9.0));
+            }
         }
     }
 }
@@ -259,5 +258,6 @@ int optimalItem() {
             maxPtsID = itemID;
         }
     }
+    // DEBUG(("%d", maxPtsID));
     return maxPtsID;
 }
