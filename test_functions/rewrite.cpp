@@ -23,9 +23,9 @@ void init() {
 
     update();
     rB = (myPos[1] < 0) ? -1 : 1;
-    spsLoc[0][0] = 0.6 * rB;
-    spsLoc[0][1] = -0.5 * rB;
-    spsLoc[0][2] = -0.18 * rB;
+    spsLoc[0][0] = -0.5 * rB;
+    spsLoc[0][1] = 0.5 * rB;
+    spsLoc[0][2] = -0.15 * rB;
     spsLoc[1][0] = 0.3 * rB;
     spsLoc[1][1] = 0.3 * rB;
     spsLoc[1][2] = 0.3 * rB;
