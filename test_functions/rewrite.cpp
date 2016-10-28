@@ -149,7 +149,7 @@ void moveFast(float target[3]) {
                 parallelForce = sqrtf((fMax * fMax) - (perpForce * perpForce));
             }
 
-            if (vParallelMag/dist > 0.18) {
+            if (vParallelMag/dist > 0.17) {
                 parallelForce = 0.0;
             }
         }
@@ -159,10 +159,10 @@ void moveFast(float target[3]) {
             totalForce[i] = (vPerp[i] * perpForce * -1) + (vectorBetween[i] * parallelForce);
         }
 
-        // DEBUG(("dist: %f", dist));
-        // DEBUG(("vel: %f, %f", vParallelMag, vPerpMag));
-        // DEBUG(("force: %f, %f", parallelForce, perpForce));
-        // DEBUG(("-------------------------------------"));
+        DEBUG(("dist: %f", dist));
+        DEBUG(("vel: %f, %f", vParallelMag, vPerpMag));
+        DEBUG(("force: %f, %f", parallelForce, perpForce));
+        DEBUG(("-------------------------------------"));
 
         api.setForces(totalForce);
     }
