@@ -5,6 +5,7 @@ float otherPos[3];
 float itemPos[6][3]; // itemPos[itemID][x/y/z coordinate]
 float assemblyZone[3]; // coordinates of assembly zone
 float otherAss[3];
+float assemblyError;
 float spsLoc[2][3]; // locations of the last two SPSs (first one is at start)
 
 float accMax, mass, fMax;
@@ -52,6 +53,7 @@ void loop() {
             // Get assembly zone location
             float aZ[4];
             game.getZone(aZ);
+            assemblyError = aZ[3];
             for (int i = 0; i < 3; i++) { 
                 assemblyZone[i] = aZ[i]; 
                 otherAss[i] = assemblyZone[i] * -1;
@@ -81,7 +83,7 @@ void dock(int itemID) {
         mathVecSubtract(vectorBetween, assemblyZone, myPos, 3);
         float dist = mathVecMagnitude(vectorBetween, 3);
 
-        if (dist < maxDockingDist && dist > minDockingDist && isFacing(assemblyZone, (3.14 / 8.0))) {
+        if (dist < maxDockingDist + (0.1 - assemblyError) && dist > minDockingDist - (0.1 - assemblyError) && isFacing(assemblyZone, (3.14 / 8.0))) {
             game.dropItem();
             accFactor = 1.0;
         } else {
