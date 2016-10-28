@@ -1,11 +1,9 @@
-<<<<<<< HEAD
-=======
+
 // Temporary values that are relatively accurate
 float accMax;
 float mass;
 float fMax;
 
->>>>>>> origin/moveFast_setForces
 int gameTime;
 
 // myState variables
@@ -25,12 +23,8 @@ float assemblyZone[3]; // x, y, z coordinates of assembly zone
 
 float spsLoc[3][3]; // spsLoc[sps drop number][x/y/z coordinate]
 
-<<<<<<< HEAD
-int rB; // modifies SPS locations based on our starting position: -1 is red, 1 is blue
 
-=======
 int rB; //modifies SPS locations based on our starting position
->>>>>>> origin/moveFast_setForces
 
 void init()
 {
@@ -39,18 +33,11 @@ void init()
     game.dropSPS(); // drop SPS at spawn point
 
     // Set SPS locations
-<<<<<<< HEAD
-    updateState();
-    rB = (myPos[1] < 0) ? -1 : 1;
-    spsLoc[0][0] = 0.15 * rB;
-    spsLoc[0][1] = 0;
-=======
     // If there's a more consise way to set these please let me know - Kevin Li
     updateState();
     rB = (myPos[1] < 0) ? -1 : 1;
     spsLoc[0][0] = 0;
     spsLoc[0][1] = 0.15 * rB;
->>>>>>> origin/moveFast_setForces
     spsLoc[0][2] = 0;
     spsLoc[1][0] = -0.5 * rB;
     spsLoc[1][1] = 0.3 * rB;
@@ -58,14 +45,11 @@ void init()
     spsLoc[2][0] = -0.39 * rB;
     spsLoc[2][1] = -0.23 * rB;
     spsLoc[2][2] = -0.23 * rB;
-<<<<<<< HEAD
-=======
 
     // Temporary values that are relatively accurate
     mass = 4.65; // 4.64968
     accMax = 0.008476;
     fMax = mass * accMax; // 0.039411
->>>>>>> origin/moveFast_setForces
 }
 
 void loop()
@@ -97,12 +81,8 @@ void loop()
         } else {
             moveFast(spsLoc[3 - game.getNumSPSHeld()]);
         }
-<<<<<<< HEAD
-    } else { 
-        // All SPSs are placed
-=======
+
     } else { // All SPSs are placed
->>>>>>> origin/moveFast_setForces
         dock(optimalItem());
     }
 }
@@ -225,31 +205,7 @@ void moveFast(float target[3]) {
                     api.setForces(totalForce);
                 }
                 break;
-
-<<<<<<< HEAD
-    float velocityMag = mathVecMagnitude(myVel, 3);
-
-    if (velocityMag > 0.09) {  // Distance between SPHERE and target location
-        float zero[3] = {0, 0, 0};
-        DEBUG(("too fast 5 u"));
-        // float dist = mathVecMagnitude(vectorBetween, 3);
-        api.setVelocityTarget(zero);
-        return;
     }
-    
-    // Not sure who changed values inside of if statment & added for loop - Larry
-    if (dist > 0.5 * 0.01 * 36 + mathVecMagnitude(myPos + 3, 3) * 6) {
-        for (n = 0; n < 3; n++) { //scale velocity (disp) to speed
-            temp[n] *= dist;
-        }
-        api.setVelocityTarget(temp);
-    } else {
-        api.setPositionTarget(target);
-=======
->>>>>>> origin/moveFast_setForces
-    }
-
-    
 }
 
 // Sets attitude toward a given point
@@ -323,12 +279,9 @@ void dock(int itemID)
     }
 }
 
-<<<<<<< HEAD
-// Returns the itemID of the best item to dock with
-=======
+
 // TODO: Add weight for stealing
 // Return the itemID of the best item to dock with
->>>>>>> origin/moveFast_setForces
 int optimalItem()
 {
     int maxPtsID = 0;
@@ -368,15 +321,7 @@ int optimalItem()
             maxPts = itemPPS * timeInZone;
             maxPtsID = itemID;
         }
-<<<<<<< HEAD
     }
-
     return maxPtsID;
 }
-=======
 
-    }
-
-    return maxPtsID;
-}
->>>>>>> origin/moveFast_setForces
