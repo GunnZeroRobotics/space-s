@@ -246,7 +246,7 @@ int optimalItem() {
         if (game.hasItem(itemID) == 2 && dist(otherAss, otherPos) < dist(otherAss, myPos) && mathVecMagnitude(myVel, 3) < 0.01) {
             mathVecSubtract(itemDist, otherAss, myPos, 3);
             mathVecSubtract(zoneDist, assemblyZone, otherAss, 3);
-        } else if (game.hasItem(itemID == 2)) {
+        } else if (game.hasItem(itemID) == 2) {
             continue;
         }  else {
             mathVecSubtract(itemDist, itemPos[itemID], myPos, 3);
