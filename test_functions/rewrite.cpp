@@ -23,12 +23,12 @@ void init() {
 
     update();
     rB = (myPos[1] < 0) ? -1 : 1;
-    spsLoc[0][0] = -0.5 * rB;
-    spsLoc[0][1] = 0.27 * rB;
-    spsLoc[0][2] = 0;
-    spsLoc[1][0] = -0.395 * rB;
-    spsLoc[1][1] = -0.23 * rB;
-    spsLoc[1][2] = -0.23 * rB;
+    spsLoc[0][0] = 0.6 * rB;
+    spsLoc[0][1] = -0.5 * rB;
+    spsLoc[0][2] = -0.18 * rB;
+    spsLoc[1][0] = 0.3 * rB;
+    spsLoc[1][1] = 0.3 * rB;
+    spsLoc[1][2] = 0.3 * rB;
 }
 
 void loop() {
@@ -37,32 +37,27 @@ void loop() {
     int spsHeld = game.getNumSPSHeld();
 
     if (spsHeld == 2) {
-        // Dropping 2nd SPS
-        if (dist(myPos, spsLoc[0]) < 0.03) {
+        if (dist(myPos, spsLoc[0]) < 0.07) {
             game.dropSPS();
             accFactor = (8.0 / 9.0);
         } else {
             moveFast(spsLoc[0]);
         }
     } else if (spsHeld == 1) {
-        // Dropping last SPS
-        if (dist(myPos, spsLoc[1]) < 0.02) {
-            game.dropSPS();
-            accFactor = 1.0;
-
-            // Get assembly zone location
-            float aZ[4];
-            game.getZone(aZ);
-            assemblyError = aZ[3];
-            for (int i = 0; i < 3; i++) { 
-                assemblyZone[i] = aZ[i]; 
-                otherAss[i] = assemblyZone[i] * -1;
+        if (dist(itemPos[0], otherPos) < dist(itemPos[1], otherPos)) {
+            // Enemy going for item 0
+            if (dist(itemPos[0], myPos) < dist(itemPos[0], otherPos)) {
+                dock(0);
+            } else {
+                dock(1);
             }
-
-            // Start docking
-            dock(optimalItem());
         } else {
-            moveFast(spsLoc[1]);
+            // Enemy going for item 1
+            if (dist(itemPos[1], myPos) < dist(itemPos[1], otherPos)) {
+                dock(1);
+            } else {
+                dock(0);
+            }
         }
     } else {
         dock(optimalItem());
@@ -108,6 +103,20 @@ void dock(int itemID) {
             moveFast(targetPos);
             pointToward(itemPos[itemID]);
         } else {
+            if (game.getNumSPSHeld() != 0) {
+                game.dropSPS();
+                game.dropSPS();
+                accFactor = 1.0;
+
+                // Get assembly zone location
+                float aZ[4];
+                game.getZone(aZ);
+                assemblyError = aZ[3];
+                for (int i = 0; i < 3; i++) { 
+                    assemblyZone[i] = aZ[i]; 
+                    otherAss[i] = assemblyZone[i] * -1;
+                }
+            }
             if (game.dockItem(itemID)) {
                 accFactor = (itemID < 2) ? (8.0 / 11.0) : ((itemID < 4) ? (4.0 / 5.0) : (8.0 / 9.0));
             }
