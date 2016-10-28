@@ -1,10 +1,10 @@
 float myPos[3], myVel[3], myAtt[3];
 
-// Currently not in use; uncomment these and their corresponding lines in the update method if needed
-// float otherPos[3], otherVel[3], otherAtt[3];
+float otherPos[3];
 
 float itemPos[6][3]; // itemPos[itemID][x/y/z coordinate]
 float assemblyZone[3]; // coordinates of assembly zone
+float otherAss[3];
 float spsLoc[2][3]; // locations of the last two SPSs (first one is at start)
 
 float accMax, mass, fMax;
@@ -52,7 +52,10 @@ void loop() {
             // Get assembly zone location
             float aZ[4];
             game.getZone(aZ);
-            for (int i = 0; i < 3; i++) { assemblyZone[i] = aZ[i]; }
+            for (int i = 0; i < 3; i++) { 
+                assemblyZone[i] = aZ[i]; 
+                otherAss[i] = assemblyZone[i] * -1;
+            }
 
             // Start docking
             dock(optimalItem());
@@ -197,15 +200,16 @@ float angleBetween(float vector1[3], float vector2[3]) {
 // Updates gameTime, SPHERE states, and item locations
 void update() {
     float myState[12];
-    // float otherState[12];
+    float otherState[12];
 
     // SPHERE States
     api.getMyZRState(myState);
+    api.getOtherZRState(otherState);
     for (int i = 0; i < 3; i++) {
         myPos[i] = myState[i];
         myVel[i] = myState[i + 3];
         myAtt[i] = myState[i + 6];
-        // otherPos[i] = otherState[i];
+        otherPos[i] = otherState[i];
         // otherVel[i] = otherState[i + 3];
         // otherAtt[i] = otherAtt[i + 6];
     }
@@ -237,11 +241,11 @@ int optimalItem() {
         float zoneDist[3]; // Vector between item and assembly zone
 
         // If opponent has the item, assume it's in their assembly zone
-        if (game.hasItem(itemID) == 2) {
-            float oppAss[3];
-            for (int i = 0; i < 3; i++) { oppAss[i] = assemblyZone[i] * -1; }
-            mathVecSubtract(itemDist, oppAss, myPos, 3);
-            mathVecSubtract(zoneDist, assemblyZone, oppAss, 3);
+        if (game.hasItem(itemID) == 2 && dist(otherAss, otherPos) < dist(otherAss, myPos)) {
+            mathVecSubtract(itemDist, otherAss, myPos, 3);
+            mathVecSubtract(zoneDist, assemblyZone, otherAss, 3);
+        } else if (game.hasItem(itemID == 2)) {
+            continue;
         }  else {
             mathVecSubtract(itemDist, itemPos[itemID], myPos, 3);
             mathVecSubtract(zoneDist, assemblyZone, itemPos[itemID], 3);
