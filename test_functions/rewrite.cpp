@@ -105,7 +105,6 @@ void dock(int itemID) {
         } else {
             if (game.getNumSPSHeld() != 0) {
                 game.dropSPS();
-                game.dropSPS();
                 accFactor = 1.0;
 
                 // Get assembly zone location
@@ -114,7 +113,7 @@ void dock(int itemID) {
                 assemblyError = aZ[3];
                 for (int i = 0; i < 3; i++) { 
                     assemblyZone[i] = aZ[i]; 
-                    otherAss[i] = assemblyZone[i] * -1;
+                    otherAss[i] = aZ[i] * -1;
                 }
             }
             if (game.dockItem(itemID)) {
