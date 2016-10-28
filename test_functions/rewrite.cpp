@@ -15,7 +15,7 @@ int rB; // -1 = red, 1 = blue
 void init() {
     mass = 4.65; // 4.64968
     accMax = 0.008476;
-    fMax = mass * accMax; // 0.039411
+    fMax = 0.039411;
 
     game.dropSPS();
     accFactor = 0.8;
@@ -24,8 +24,8 @@ void init() {
     rB = (myPos[1] < 0) ? -1 : 1;
     spsLoc[0][0] = -0.5 * rB;
     spsLoc[0][1] = 0.27 * rB;
-    spsLoc[0][2] = 0 * rB;
-    spsLoc[1][0] = -0.41 * rB;
+    spsLoc[0][2] = 0;
+    spsLoc[1][0] = -0.395 * rB;
     spsLoc[1][1] = -0.23 * rB;
     spsLoc[1][2] = -0.23 * rB;
 }
@@ -33,7 +33,9 @@ void init() {
 void loop() {
     update();
 
-    if (game.getNumSPSHeld() == 2) {
+    int spsHeld = game.getNumSPSHeld();
+
+    if (spsHeld == 2) {
         // Dropping 2nd SPS
         if (dist(myPos, spsLoc[0]) < 0.03) {
             game.dropSPS();
@@ -41,7 +43,7 @@ void loop() {
         } else {
             moveFast(spsLoc[0]);
         }
-    } else if (game.getNumSPSHeld() == 1) {
+    } else if (spsHeld == 1) {
         // Dropping last SPS
         if (dist(myPos, spsLoc[1]) < 0.02) {
             game.dropSPS();
@@ -79,25 +81,26 @@ void dock(int itemID) {
 
         if (dist < maxDockingDist && dist > minDockingDist && isFacing(assemblyZone, (3.14 / 8.0))) {
             game.dropItem();
-            accFactor = 1;
+            accFactor = 1.0;
         } else {
             // Set position to assemblyZone's position scaled down by dockingDist
             for (int i = 0; i < 3; i++) {
-                targetPos[i] = vectorBetween[i] * ((mathVecMagnitude(vectorBetween, 3) - minDockingDist) / mathVecMagnitude(vectorBetween, 3)) + myPos[i];
+                targetPos[i] = vectorBetween[i] * ((dist - minDockingDist) / dist) + myPos[i];
             }
             moveFast(targetPos);
             pointToward(assemblyZone);
         }
     } else {
         mathVecSubtract(vectorBetween, itemPos[itemID], myPos, 3);
+        float dist = mathVecMagnitude(vectorBetween, 3);
 
         // Scale targetPos to the item's position minus docking distance
         for (int i = 0; i < 3; i++) {
-            targetPos[i] = (vectorBetween[i] * ((mathVecMagnitude(vectorBetween, 3) - maxDockingDist) / mathVecMagnitude(vectorBetween, 3))) + myPos[i];
+            targetPos[i] = (vectorBetween[i] * (dist - maxDockingDist) / dist) + myPos[i];
         }
 
         // Checks if SPHERE satisfies docking requirements -- if so, docks
-        if (mathVecMagnitude(myVel, 3) > 0.01 || mathVecMagnitude(vectorBetween, 3) > maxDockingDist || !isFacing(itemPos[itemID], 0.25) || mathVecMagnitude(vectorBetween, 3) < minDockingDist) {
+        if (mathVecMagnitude(myVel, 3) > 0.01 || dist > maxDockingDist || !isFacing(itemPos[itemID], 0.25) || dist < minDockingDist) {
             moveFast(targetPos);
             pointToward(itemPos[itemID]);
         } else {
@@ -117,8 +120,9 @@ void moveFast(float target[3]) {
     if (dist < 0.01) {
         api.setPositionTarget(target);
     } else {
-        float vParallelMag = mathVecMagnitude(myVel, 3) * cosf(angleBetween(vectorBetween, myVel));
-        float vPerpMag = mathVecMagnitude(myVel, 3) * sinf(angleBetween(vectorBetween, myVel));
+        float vMag = mathVecMagnitude(myVel, 3);
+        float vParallelMag = vMag * cosf(angleBetween(vectorBetween, myVel));
+        float vPerpMag = vMag * sinf(angleBetween(vectorBetween, myVel));
 
         // Find a vector in the direction of the perpendicular velocity
         float vTemp[3];
@@ -228,9 +232,7 @@ int optimalItem() {
         if (game.hasItem(itemID) == 1) { return itemID; }
 
         // If the item is in our assembly zone, skip it
-        if (game.itemInZone(itemID)) {
-            continue;
-        }
+        if (game.itemInZone(itemID)) { continue; }
 
         float itemDist[3]; // Vector between SPHERE and item
         float zoneDist[3]; // Vector between item and assembly zone
