@@ -49,16 +49,14 @@ void loop() {
             moveFast(spsLoc[0]);
         }
     } else if (spsHeld == 1) {
-
         bool otherItemZero = dist(itemPos[0], otherPos) < dist(itemPos[1], otherPos);
         bool closerItemZero = dist(itemPos[0], myPos) < dist(itemPos[0], otherPos);
         bool closerItemOne = dist(itemPos[1], myPos) < dist(itemPos[1], otherPos);
 
-        // NEED HELP
-        if ((otherItemZero && closerItemZero) || (!otherItemZero && !closerItemOne)) {
-                (rB == -1) ? getItem1() : getItem0();
+        if (((otherItemZero && closerItemZero) || !(otherItemZero || closerItemOne)) == (rB == -1)) {
+            getItem1();
         } else {
-                (rB == -1) ? getItem0() : getItem1();
+            getItem0();
         }
 
         if (dist(myPos, spsLoc[1]) < 0.03) {
@@ -113,7 +111,7 @@ void dock(int itemID) {
         float dist = mathVecMagnitude(vectorBetween, 3);
 
         float assemblyTolerance = 0.09 - assemblyError;
-        if (dist < maxDockingDist + assemblyTolerance && dist > minDockingDist - assemblyTolerance && isFacing(assemblyZone, (3.14 / 8.0))) {
+        if (dist < maxDockingDist + assemblyTolerance && dist > minDockingDist - assemblyTolerance && isFacing(assemblyZone, 0.392699)) {
             game.dropItem();
             accFactor = 1.0;
         } else {
