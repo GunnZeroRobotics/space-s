@@ -44,7 +44,7 @@ void loop() {
     if (spsHeld == 2) {
         if (dist(myPos, spsLoc[0]) < 0.07) {
             game.dropSPS();
-            accFactor = (8.0 / 9.0);
+            accFactor = 0.7272727;
         } else {
             moveFast(spsLoc[0]);
         }
@@ -142,7 +142,7 @@ void dock(int itemID) {
             pointToward(itemPos[itemID]);
         } else {
             if (game.dockItem(itemID)) {
-                accFactor = (itemID < 2) ? (8.0 / 11.0) : ((itemID < 4) ? (4.0 / 5.0) : (8.0 / 9.0));
+                accFactor = (itemID < 2) ? 0.7272727 : ((itemID < 4) ? 0.8 : 0.8888889);
             }
         }
     }
