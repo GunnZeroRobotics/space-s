@@ -29,7 +29,7 @@ void init() {
     rB = (myPos[1] < 0) ? -1 : 1;
     spsLoc[0][0] = -0.5 * rB;
     spsLoc[0][1] = 0.27 * rB;
-    spsLoc[0][2] = 0 * rB;
+    spsLoc[0][2] = 0.05 * rB;
 
     firstItemAtt[0] = 0;
     firstItemAtt[1] = 0;
@@ -49,21 +49,18 @@ void loop() {
             moveFast(spsLoc[0]);
         }
     } else if (spsHeld == 1) {
-        if (dist(itemPos[0], otherPos) < dist(itemPos[1], otherPos)) {
-            // Enemy going for item 0
-            if (dist(itemPos[0], myPos) < dist(itemPos[0], otherPos)) {
+
+        bool otherItemZero = dist(itemPos[0], otherPos) < dist(itemPos[1], otherPos);
+        bool closerItemZero = dist(itemPos[0], myPos) < dist(itemPos[0], otherPos);
+        bool closerItemOne = dist(itemPos[1], myPos) < dist(itemPos[1], otherPos);
+
+        // NEED HELP
+        if ((otherItemZero && closerItemZero) || (!otherItemZero && !closerItemOne)) {
                 (rB == -1) ? getItem1() : getItem0();
-            } else {
-                (rB == -1) ? getItem0() : getItem1();
-            }
         } else {
-            // Enemy going for item 1
-            if (dist(itemPos[1], myPos) < dist(itemPos[1], otherPos)) {
                 (rB == -1) ? getItem0() : getItem1();
-            } else {
-                (rB == -1) ? getItem1() : getItem0();
-            }
         }
+
         if (dist(myPos, spsLoc[1]) < 0.03) {
             game.dropSPS();
             accFactor = 1.0;
