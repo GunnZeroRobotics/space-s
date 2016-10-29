@@ -23,12 +23,9 @@ void init() {
 
     update();
     rB = (myPos[1] < 0) ? -1 : 1;
-    spsLoc[0][0] = -0.5 * rB;
-    spsLoc[0][1] = 0.5 * rB;
-    spsLoc[0][2] = -0.15 * rB;
-    spsLoc[1][0] = 0.3 * rB;
-    spsLoc[1][1] = 0.3 * rB;
-    spsLoc[1][2] = 0.3 * rB;
+    spsLoc[0][0] = -0.55 * rB;
+    spsLoc[0][1] = 0.55 * rB;
+    spsLoc[0][2] = -0.1 * rB;
 }
 
 void loop() {
@@ -78,7 +75,7 @@ void dock(int itemID) {
         mathVecSubtract(vectorBetween, assemblyZone, myPos, 3);
         float dist = mathVecMagnitude(vectorBetween, 3);
 
-        if (dist < maxDockingDist + (0.095 - assemblyError) && dist > minDockingDist - (0.095 - assemblyError) && isFacing(assemblyZone, (3.14 / 8.0))) {
+        if (dist < maxDockingDist + (0.09 - assemblyError) && dist > minDockingDist - (0.09 - assemblyError) && isFacing(assemblyZone, (3.14 / 8.0))) {
             game.dropItem();
             accFactor = 1.0;
         } else {
@@ -149,7 +146,7 @@ void moveFast(float target[3]) {
         float perpForce;
         float parallelForce = 0;
 
-        if (dist < ((vParallelMag * vParallelMag) / (2 * accMax * accFactor * 0.8))) {
+        if (dist < ((vParallelMag * vParallelMag) / (2 * accMax * accFactor * 0.785))) {
             parallelForce = -0.9 * fMax;
             if ((mass * vPerpMag / 2) < sqrtf((fMax * fMax) - (parallelForce * parallelForce))){
                 perpForce = mass * vPerpMag / 2;
@@ -162,7 +159,7 @@ void moveFast(float target[3]) {
                 parallelForce = sqrtf((fMax * fMax) - (perpForce * perpForce));
             }
 
-            if (vParallelMag/dist > 0.17 && dist < 0.3) {
+            if ((vParallelMag/dist > 0.17 && dist < 0.3) || vParallelMag > 0.06 || vParallelMag/dist > 0.19) {
                 parallelForce = 0.0;
             } 
         }
@@ -251,10 +248,12 @@ int optimalItem() {
         float zoneDist[3]; // Vector between item and assembly zone
 
         // If opponent has the item, assume it's in their assembly zone
-        if (game.hasItem(itemID) == 2) {
+        if (game.hasItem(itemID) == 2  && dist(otherAss, otherPos) < dist(otherAss, myPos)) {
             mathVecSubtract(itemDist, otherAss, myPos, 3);
             mathVecSubtract(zoneDist, assemblyZone, otherAss, 3);
-        }  else {
+        } else if (game.hasItem(itemID) == 2) {
+            continue;
+        } else {
             mathVecSubtract(itemDist, itemPos[itemID], myPos, 3);
             mathVecSubtract(zoneDist, assemblyZone, itemPos[itemID], 3);
         }
