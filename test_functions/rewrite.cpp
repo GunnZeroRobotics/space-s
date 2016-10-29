@@ -50,16 +50,16 @@ void loop() {
         if (dist(itemPos[0], otherPos) < dist(itemPos[1], otherPos)) {
             // Enemy going for item 0
             if (dist(itemPos[0], myPos) < dist(itemPos[0], otherPos)) {
-                getItem0();
+                (rB == -1) ? getItem1() : getItem0();
             } else {
-                getItem1();
+                (rB == -1) ? getItem0() : getItem1();
             }
         } else {
             // Enemy going for item 1
             if (dist(itemPos[1], myPos) < dist(itemPos[1], otherPos)) {
-                getItem1();    
+                (rB == -1) ? getItem0() : getItem1();
             } else {
-                getItem0();
+                (rB == -1) ? getItem1() : getItem0();
             }
         }
         if (dist(myPos, spsLoc[1]) < 0.03) {
@@ -86,17 +86,17 @@ void loop() {
 // Temporary Methods
 
 void getItem0() {
-    spsLoc[1][0] = 0.22;
-    spsLoc[1][1] = 0.385;
-    spsLoc[1][2] = 0.22;
-    firstItemAtt[1] = -1;
+    spsLoc[1][0] = 0.22 * rB;
+    spsLoc[1][1] = 0.384 * rB;
+    spsLoc[1][2] = 0.22 * rB;
+    firstItemAtt[1] = -1 * rB;
 }
 
 void getItem1() {
-    spsLoc[1][0] = -0.395;
-    spsLoc[1][1] = -0.23;
-    spsLoc[1][2] = -0.23;
-    firstItemAtt[0] = 1;
+    spsLoc[1][0] = -0.395 * rB;
+    spsLoc[1][1] = -0.23 * rB;
+    spsLoc[1][2] = -0.23 * rB;
+    firstItemAtt[0] = 1 * rB;
 }
 
 // Math and Movement Methods
