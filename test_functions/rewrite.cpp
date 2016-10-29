@@ -9,6 +9,7 @@ float assemblyError;
 float spsLoc[2][3]; // locations of the last two SPSs (first one is at start)
 
 float accMax, mass, fMax;
+float fMaxSquared; // Variable used to reduce code size
 float accFactor; // factor to multiply accMax by if holding items/SPSs, currently assumes we will not have items and SPSs at the same time
 
 int rB; // -1 = red, 1 = blue
@@ -19,6 +20,7 @@ void init() {
     mass = 4.65; // 4.64968
     accMax = 0.008476;
     fMax = 0.039411;
+    fMaxSquared = 0.001553226921;
 
     game.dropSPS();
     accFactor = 0.8;
@@ -113,7 +115,8 @@ void dock(int itemID) {
         mathVecSubtract(vectorBetween, assemblyZone, myPos, 3);
         float dist = mathVecMagnitude(vectorBetween, 3);
 
-        if (dist < maxDockingDist + (0.09 - assemblyError) && dist > minDockingDist - (0.09 - assemblyError) && isFacing(assemblyZone, (3.14 / 8.0))) {
+        float assemblyTolerance = 0.09 - assemblyError;
+        if (dist < maxDockingDist + assemblyTolerance && dist > minDockingDist - assemblyTolerance && isFacing(assemblyZone, (3.14 / 8.0))) {
             game.dropItem();
             accFactor = 1.0;
         } else {
@@ -155,8 +158,9 @@ void moveFast(float target[3]) {
         api.setPositionTarget(target);
     } else {
         float vMag = mathVecMagnitude(myVel, 3);
-        float vParallelMag = vMag * cosf(angleBetween(vectorBetween, myVel));
-        float vPerpMag = vMag * sinf(angleBetween(vectorBetween, myVel));
+        float ang = angleBetween(vectorBetween, myVel); // Angle between velocity and vector between
+        float vParallelMag = vMag * cosf(ang);
+        float vPerpMag = vMag * sinf(ang);
 
         // Find a vector in the direction of the perpendicular velocity
         float vTemp[3];
@@ -173,15 +177,16 @@ void moveFast(float target[3]) {
 
         if (dist < ((vParallelMag * vParallelMag) / (2 * accMax * accFactor * 0.785))) {
             parallelForce = -0.9 * fMax;
-            if ((mass * vPerpMag / 2) < sqrtf((fMax * fMax) - (parallelForce * parallelForce))){
-                perpForce = mass * vPerpMag / 2;
+            float temp = mass * (vPerpMag / 2); // Reduces code size
+            if (temp < sqrtf(fMaxSquared - (parallelForce * parallelForce))){
+                perpForce = temp;
             } else { 
-                perpForce = sqrtf((fMax * fMax) - (parallelForce * parallelForce));
+                perpForce = sqrtf(fMaxSquared - (parallelForce * parallelForce));
             }
         } else {
             perpForce = mass * vPerpMag;
             if (perpForce < fMax) {
-                parallelForce = sqrtf((fMax * fMax) - (perpForce * perpForce));
+                parallelForce = sqrtf(fMaxSquared - (perpForce * perpForce));
             }
 
             if ((vParallelMag/dist > 0.17 && dist < 0.375) || vParallelMag > 0.06 || vParallelMag/dist > 0.19) {
@@ -194,10 +199,10 @@ void moveFast(float target[3]) {
             totalForce[i] = (vPerp[i] * perpForce * -1) + (vectorBetween[i] * parallelForce);
         }
 
-        DEBUG(("dist: %f", dist));
-        DEBUG(("vel: %f, %f", vParallelMag, vPerpMag));
-        DEBUG(("force: %f, %f", parallelForce, perpForce));
-        DEBUG(("-------------------------------------"));
+        // DEBUG(("dist: %f", dist));
+        // DEBUG(("vel: %f, %f", vParallelMag, vPerpMag));
+        // DEBUG(("force: %f, %f", parallelForce, perpForce));
+        // DEBUG(("-------------------------------------"));
 
         api.setForces(totalForce);
     }
@@ -289,8 +294,10 @@ int optimalItem() {
 
         float timeInZone = 180 - api.getTime() - travelTime;
 
-        if (itemPPS * timeInZone > maxPts) {
-            maxPts = itemPPS * timeInZone;
+        float itemPoints = itemPPS * timeInZone;
+
+        if (itemPoints > maxPts) {
+            maxPts = itemPoints;
             maxPtsID = itemID;
         }
     }
