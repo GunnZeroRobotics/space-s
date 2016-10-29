@@ -59,9 +59,15 @@ void loop() {
         // bool closerItemOne = dist(itemPos[1], myPos) < dist(itemPos[1], otherPos);
 
         if ((((cc < aa) && (aa < bb)) || ((dd > bb) && (bb > aa))) == (rB == -1)) {
-            getItem1();
+            spsLoc[1][0] = -0.395 * rB;
+            spsLoc[1][1] = -0.23 * rB;
+            spsLoc[1][2] = -0.23 * rB;
+            firstItemAtt[0] = 1 * rB;
         } else {
-            getItem0();
+            spsLoc[1][0] = 0.22 * rB;
+            spsLoc[1][1] = 0.384 * rB;
+            spsLoc[1][2] = 0.22 * rB;
+            firstItemAtt[1] = -1 * rB;
         }
 
         if (dist(myPos, spsLoc[1]) < 0.03) {
@@ -83,22 +89,6 @@ void loop() {
     } else {
         dock(optimalItem());
     }
-}
-
-// Temporary Methods
-
-void getItem0() {
-    spsLoc[1][0] = 0.22 * rB;
-    spsLoc[1][1] = 0.384 * rB;
-    spsLoc[1][2] = 0.22 * rB;
-    firstItemAtt[1] = -1 * rB;
-}
-
-void getItem1() {
-    spsLoc[1][0] = -0.395 * rB;
-    spsLoc[1][1] = -0.23 * rB;
-    spsLoc[1][2] = -0.23 * rB;
-    firstItemAtt[0] = 1 * rB;
 }
 
 // Math and Movement Methods
@@ -267,6 +257,7 @@ int optimalItem() {
     float maxPts = -1;
 
     for (int itemID = 0; itemID < 6; itemID++) {
+
         // If we're holding an item, return that item
         if (game.hasItem(itemID) == 1) { return itemID; }
 
@@ -277,12 +268,16 @@ int optimalItem() {
         float zoneDist[3]; // Vector between item and assembly zone
 
         // If opponent has the item, assume it's in their assembly zone
-        if (game.hasItem(itemID) == 2  && dist(otherAss, otherPos) < dist(otherAss, myPos)) {
-            mathVecSubtract(itemDist, otherAss, myPos, 3);
-            mathVecSubtract(zoneDist, assemblyZone, otherAss, 3);
-        } else if (game.hasItem(itemID) == 2) {
-            continue;
-        } else {
+        if (game.hasItem(itemID) == 2) {
+            if (dist(otherAss, otherPos) < dist(otherAss, myPos)) {
+                mathVecSubtract(itemDist, otherAss, myPos, 3);
+                mathVecSubtract(zoneDist, assemblyZone, otherAss, 3);
+            }
+            else {
+                continue;
+            }
+        }
+        else {
             mathVecSubtract(itemDist, itemPos[itemID], myPos, 3);
             mathVecSubtract(zoneDist, assemblyZone, itemPos[itemID], 3);
         }
