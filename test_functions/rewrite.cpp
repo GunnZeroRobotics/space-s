@@ -13,6 +13,8 @@ float accFactor; // factor to multiply accMax by if holding items/SPSs, currentl
 
 int rB; // -1 = red, 1 = blue
 
+float firstItemAtt[3];
+
 void init() {
     mass = 4.65; // 4.64968
     accMax = 0.008476;
@@ -23,9 +25,13 @@ void init() {
 
     update();
     rB = (myPos[1] < 0) ? -1 : 1;
-    spsLoc[0][0] = -0.55 * rB;
-    spsLoc[0][1] = 0.55 * rB;
-    spsLoc[0][2] = -0.1 * rB;
+    spsLoc[0][0] = -0.5 * rB;
+    spsLoc[0][1] = 0.27 * rB;
+    spsLoc[0][2] = 0 * rB;
+
+    firstItemAtt[0] = 0;
+    firstItemAtt[1] = 0;
+    firstItemAtt[2] = 0;
 }
 
 void loop() {
@@ -44,21 +50,53 @@ void loop() {
         if (dist(itemPos[0], otherPos) < dist(itemPos[1], otherPos)) {
             // Enemy going for item 0
             if (dist(itemPos[0], myPos) < dist(itemPos[0], otherPos)) {
-                dock(0);
+                (rB == -1) ? getItem1() : getItem0();
             } else {
-                dock(1);
+                (rB == -1) ? getItem0() : getItem1();
             }
         } else {
             // Enemy going for item 1
             if (dist(itemPos[1], myPos) < dist(itemPos[1], otherPos)) {
-                dock(1);
+                (rB == -1) ? getItem0() : getItem1();
             } else {
-                dock(0);
+                (rB == -1) ? getItem1() : getItem0();
             }
+        }
+        if (dist(myPos, spsLoc[1]) < 0.03) {
+            game.dropSPS();
+            accFactor = 1.0;
+
+            // Get assembly zone location
+            float aZ[4];
+            game.getZone(aZ);
+            assemblyError = aZ[3];
+            for (int i = 0; i < 3; i++) { 
+                assemblyZone[i] = aZ[i]; 
+                otherAss[i] = aZ[i] * -1;
+            }
+        } else {
+            moveFast(spsLoc[1]);
+            api.setAttitudeTarget(firstItemAtt);
         }
     } else {
         dock(optimalItem());
     }
+}
+
+// Temporary Methods
+
+void getItem0() {
+    spsLoc[1][0] = 0.22 * rB;
+    spsLoc[1][1] = 0.384 * rB;
+    spsLoc[1][2] = 0.22 * rB;
+    firstItemAtt[1] = -1 * rB;
+}
+
+void getItem1() {
+    spsLoc[1][0] = -0.395 * rB;
+    spsLoc[1][1] = -0.23 * rB;
+    spsLoc[1][2] = -0.23 * rB;
+    firstItemAtt[0] = 1 * rB;
 }
 
 // Math and Movement Methods
@@ -100,19 +138,6 @@ void dock(int itemID) {
             moveFast(targetPos);
             pointToward(itemPos[itemID]);
         } else {
-            if (game.getNumSPSHeld() != 0) {
-                game.dropSPS();
-                accFactor = 1.0;
-
-                // Get assembly zone location
-                float aZ[4];
-                game.getZone(aZ);
-                assemblyError = aZ[3];
-                for (int i = 0; i < 3; i++) { 
-                    assemblyZone[i] = aZ[i]; 
-                    otherAss[i] = aZ[i] * -1;
-                }
-            }
             if (game.dockItem(itemID)) {
                 accFactor = (itemID < 2) ? (8.0 / 11.0) : ((itemID < 4) ? (4.0 / 5.0) : (8.0 / 9.0));
             }
