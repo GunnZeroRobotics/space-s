@@ -49,11 +49,16 @@ void loop() {
             moveFast(spsLoc[0]);
         }
     } else if (spsHeld == 1) {
-        bool otherItemZero = dist(itemPos[0], otherPos) < dist(itemPos[1], otherPos);
-        bool closerItemZero = dist(itemPos[0], myPos) < dist(itemPos[0], otherPos);
-        bool closerItemOne = dist(itemPos[1], myPos) < dist(itemPos[1], otherPos);
 
-        if (((otherItemZero && closerItemZero) || !(otherItemZero || closerItemOne)) == (rB == -1)) {
+        float aa = dist(itemPos[0], otherPos);
+        float bb = dist(itemPos[1], otherPos);
+        float cc = dist(itemPos[0], myPos);
+        float dd = dist(itemPos[1], myPos);
+        // bool otherItemZero = dist(itemPos[0], otherPos) < dist(itemPos[1], otherPos);
+        // bool closerItemZero = dist(itemPos[0], myPos) < dist(itemPos[0], otherPos);
+        // bool closerItemOne = dist(itemPos[1], myPos) < dist(itemPos[1], otherPos);
+
+        if ((((cc < aa) && (aa < bb)) || ((dd > bb) && (bb > aa))) == (rB == -1)) {
             getItem1();
         } else {
             getItem0();
@@ -67,8 +72,8 @@ void loop() {
             float aZ[4];
             game.getZone(aZ);
             assemblyError = aZ[3];
-            for (int i = 0; i < 3; i++) { 
-                assemblyZone[i] = aZ[i]; 
+            for (int i = 0; i < 3; i++) {
+                assemblyZone[i] = aZ[i];
                 otherAss[i] = aZ[i] * -1;
             }
         } else {
@@ -146,7 +151,6 @@ void dock(int itemID) {
 void moveFast(float target[3]) {
     float vectorBetween[3];
     mathVecSubtract(vectorBetween, target, myPos, 3);
-
     float dist = mathVecMagnitude(vectorBetween, 3);
 
     if (dist < 0.01) {
@@ -175,7 +179,7 @@ void moveFast(float target[3]) {
             float temp = mass * (vPerpMag / 2); // Reduces code size
             if (temp < sqrtf(fMaxSquared - (parallelForce * parallelForce))){
                 perpForce = temp;
-            } else { 
+            } else {
                 perpForce = sqrtf(fMaxSquared - (parallelForce * parallelForce));
             }
         } else {
@@ -186,7 +190,7 @@ void moveFast(float target[3]) {
 
             if ((vParallelMag/dist > 0.17 && dist < 0.375) || vParallelMag > 0.06 || vParallelMag/dist > 0.19) {
                 parallelForce = 0.0;
-            } 
+            }
         }
 
         float totalForce[3];
