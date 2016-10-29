@@ -159,7 +159,7 @@ void moveFast(float target[3]) {
                 parallelForce = sqrtf((fMax * fMax) - (perpForce * perpForce));
             }
 
-            if ((vParallelMag/dist > 0.17 && dist < 0.3) || vParallelMag > 0.06 || vParallelMag/dist > 0.19) {
+            if ((vParallelMag/dist > 0.17 && dist < 0.375) || vParallelMag > 0.06 || vParallelMag/dist > 0.19) {
                 parallelForce = 0.0;
             } 
         }
