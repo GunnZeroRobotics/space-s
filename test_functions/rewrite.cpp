@@ -74,8 +74,8 @@ void loop() {
             float aZ[4];
             game.getZone(aZ);
             assemblyError = aZ[3];
-            for (int i = 0; i < 3; i++) { 
-                assemblyZone[i] = aZ[i]; 
+            for (int i = 0; i < 3; i++) {
+                assemblyZone[i] = aZ[i];
                 otherAss[i] = aZ[i] * -1;
             }
         } else {
@@ -92,9 +92,21 @@ void loop() {
 void dock(int itemID) {
     float vectorBetween[3]; // Vector between SPHERE and target (item or assembly zone)
     float targetPos[3]; // Target coordinate to move to
+    float minDockingDist;
+    float maxDockingDist;
 
-    float minDockingDist = (itemID < 2) ? 0.151 : ((itemID < 4) ? 0.138 : 0.124);
-    float maxDockingDist = (itemID < 2) ? 0.173 : ((itemID < 4) ? 0.160 : 0.146);
+    if (itemID < 2) {
+        minDockingDist = 0.151;
+        maxDockingDist = 0.173;
+    }
+    else if (itemID < 4) {
+        minDockingDist = 0.138;
+        maxDockingDist = 0.160;
+    }
+    else {
+        minDockingDist = 0.124;
+        maxDockingDist = 0.146;
+    }
 
     // If you are holding the item, put it in your assembly zone
     if (game.hasItem(itemID) == 1) {
@@ -166,7 +178,7 @@ void moveFast(float target[3]) {
             float temp = mass * (vPerpMag / 2); // Reduces code size
             if (temp < sqrtf(fMaxSquared - (parallelForce * parallelForce))){
                 perpForce = temp;
-            } else { 
+            } else {
                 perpForce = sqrtf(fMaxSquared - (parallelForce * parallelForce));
             }
         } else {
@@ -177,7 +189,7 @@ void moveFast(float target[3]) {
 
             if ((vParallelMag/dist > 0.17 && dist < 0.375) || vParallelMag > 0.06 || vParallelMag/dist > 0.19) {
                 parallelForce = 0.0;
-            } 
+            }
         }
 
         float totalForce[3];
