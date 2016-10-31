@@ -5,17 +5,22 @@ float otherPos[3];
 float itemPos[6][3]; // itemPos[itemID][x/y/z coordinate]
 float assemblyZone[3]; // coordinates of assembly zone
 float otherAss[3];
+float assemblyError;
 float spsLoc[2][3]; // locations of the last two SPSs (first one is at start)
 
 float accMax, mass, fMax;
+float fMaxSquared; // Variable used to reduce code size
 float accFactor; // factor to multiply accMax by if holding items/SPSs, currently assumes we will not have items and SPSs at the same time
 
 int rB; // -1 = red, 1 = blue
+
+float firstItemAtt[3];
 
 void init() {
     mass = 4.65; // 4.64968
     accMax = 0.008476;
     fMax = 0.039411;
+    fMaxSquared = 0.001553226921;
 
     game.dropSPS();
     accFactor = 0.8;
@@ -24,10 +29,11 @@ void init() {
     rB = (myPos[1] < 0) ? -1 : 1;
     spsLoc[0][0] = -0.5 * rB;
     spsLoc[0][1] = 0.27 * rB;
-    spsLoc[0][2] = 0;
-    spsLoc[1][0] = -0.395 * rB;
-    spsLoc[1][1] = -0.23 * rB;
-    spsLoc[1][2] = -0.23 * rB;
+    spsLoc[0][2] = 0.05 * rB;
+
+    firstItemAtt[0] = 0;
+    firstItemAtt[1] = 0;
+    firstItemAtt[2] = 0;
 }
 
 void loop() {
@@ -36,31 +42,45 @@ void loop() {
     int spsHeld = game.getNumSPSHeld();
 
     if (spsHeld == 2) {
-        // Dropping 2nd SPS
-        if (dist(myPos, spsLoc[0]) < 0.03) {
+        if (dist(myPos, spsLoc[0]) < 0.07) {
             game.dropSPS();
-            accFactor = (8.0 / 9.0);
+            accFactor = 0.7272727;
         } else {
             moveFast(spsLoc[0]);
         }
     } else if (spsHeld == 1) {
-        // Dropping last SPS
-        if (dist(myPos, spsLoc[1]) < 0.02) {
+        float otherDistZero = dist(itemPos[0], otherPos);
+        float otherDistOne = dist(itemPos[1], otherPos);
+        float myDistZero = dist(itemPos[0], myPos);
+        float myDistOne = dist(itemPos[1], myPos);
+
+        if (((otherDistZero < otherDistOne && myDistZero < otherDistZero) || !(otherDistZero < otherDistOne || myDistOne < otherDistOne)) == (rB == -1)) {
+            spsLoc[1][0] = -0.395 * rB;
+            spsLoc[1][1] = -0.23 * rB;
+            spsLoc[1][2] = -0.23 * rB;
+            firstItemAtt[0] = 1 * rB;
+        } else {
+            spsLoc[1][0] = 0.22 * rB;
+            spsLoc[1][1] = 0.384 * rB;
+            spsLoc[1][2] = 0.22 * rB;
+            firstItemAtt[1] = -1 * rB;
+        }
+
+        if (dist(myPos, spsLoc[1]) < 0.03) {
             game.dropSPS();
             accFactor = 1.0;
 
             // Get assembly zone location
             float aZ[4];
             game.getZone(aZ);
-            for (int i = 0; i < 3; i++) { 
-                assemblyZone[i] = aZ[i]; 
-                otherAss[i] = assemblyZone[i] * -1;
+            assemblyError = aZ[3];
+            for (int i = 0; i < 3; i++) {
+                assemblyZone[i] = aZ[i];
+                otherAss[i] = aZ[i] * -1;
             }
-
-            // Start docking
-            dock(optimalItem());
         } else {
             moveFast(spsLoc[1]);
+            api.setAttitudeTarget(firstItemAtt);
         }
     } else {
         dock(optimalItem());
@@ -72,16 +92,29 @@ void loop() {
 void dock(int itemID) {
     float vectorBetween[3]; // Vector between SPHERE and target (item or assembly zone)
     float targetPos[3]; // Target coordinate to move to
+    float minDockingDist;
+    float maxDockingDist;
 
-    float minDockingDist = (itemID < 2) ? 0.151 : ((itemID < 4) ? 0.138 : 0.124);
-    float maxDockingDist = (itemID < 2) ? 0.173 : ((itemID < 4) ? 0.160 : 0.146);
+    if (itemID < 2) {
+        minDockingDist = 0.151;
+        maxDockingDist = 0.173;
+    }
+    else if (itemID < 4) {
+        minDockingDist = 0.138;
+        maxDockingDist = 0.160;
+    }
+    else {
+        minDockingDist = 0.124;
+        maxDockingDist = 0.146;
+    }
 
     // If you are holding the item, put it in your assembly zone
     if (game.hasItem(itemID) == 1) {
         mathVecSubtract(vectorBetween, assemblyZone, myPos, 3);
         float dist = mathVecMagnitude(vectorBetween, 3);
 
-        if (dist < maxDockingDist && dist > minDockingDist && isFacing(assemblyZone, (3.14 / 8.0))) {
+        float assemblyTolerance = 0.09 - assemblyError;
+        if (dist < maxDockingDist + assemblyTolerance && dist > minDockingDist - assemblyTolerance && isFacing(assemblyZone, 0.392699)) {
             game.dropItem();
             accFactor = 1.0;
         } else {
@@ -107,7 +140,7 @@ void dock(int itemID) {
             pointToward(itemPos[itemID]);
         } else {
             if (game.dockItem(itemID)) {
-                accFactor = (itemID < 2) ? (8.0 / 11.0) : ((itemID < 4) ? (4.0 / 5.0) : (8.0 / 9.0));
+                accFactor = (itemID < 2) ? 0.7272727 : ((itemID < 4) ? 0.8 : 0.8888889);
             }
         }
     }
@@ -123,8 +156,9 @@ void moveFast(float target[3]) {
         api.setPositionTarget(target);
     } else {
         float vMag = mathVecMagnitude(myVel, 3);
-        float vParallelMag = vMag * cosf(angleBetween(vectorBetween, myVel));
-        float vPerpMag = vMag * sinf(angleBetween(vectorBetween, myVel));
+        float ang = angleBetween(vectorBetween, myVel); // Angle between velocity and vector between
+        float vParallelMag = vMag * cosf(ang);
+        float vPerpMag = vMag * sinf(ang);
 
         // Find a vector in the direction of the perpendicular velocity
         float vTemp[3];
@@ -139,20 +173,21 @@ void moveFast(float target[3]) {
         float perpForce;
         float parallelForce = 0;
 
-        if (dist < ((vParallelMag * vParallelMag) / (2 * accMax * accFactor * 0.8))) {
+        if (dist < ((vParallelMag * vParallelMag) / (2 * accMax * accFactor * 0.785))) {
             parallelForce = -0.9 * fMax;
-            if ((mass * vPerpMag) < sqrtf((fMax * fMax) - (parallelForce * parallelForce))){
-                perpForce = mass * vPerpMag;
-            } else { 
-                perpForce = sqrtf((fMax * fMax) - (parallelForce * parallelForce));
+            float temp = mass * (vPerpMag / 2); // Reduces code size
+            if (temp < sqrtf(fMaxSquared - (parallelForce * parallelForce))){
+                perpForce = temp;
+            } else {
+                perpForce = sqrtf(fMaxSquared - (parallelForce * parallelForce));
             }
         } else {
             perpForce = mass * vPerpMag;
             if (perpForce < fMax) {
-                parallelForce = sqrtf((fMax * fMax) - (perpForce * perpForce));
+                parallelForce = sqrtf(fMaxSquared - (perpForce * perpForce));
             }
 
-            if (vParallelMag/dist > 0.17) {
+            if ((vParallelMag/dist > 0.17 && dist < 0.375) || vParallelMag > 0.06 || vParallelMag/dist > 0.19) {
                 parallelForce = 0.0;
             }
         }
@@ -231,6 +266,7 @@ int optimalItem() {
     float maxPts = -1;
 
     for (int itemID = 0; itemID < 6; itemID++) {
+
         // If we're holding an item, return that item
         if (game.hasItem(itemID) == 1) { return itemID; }
 
@@ -241,12 +277,16 @@ int optimalItem() {
         float zoneDist[3]; // Vector between item and assembly zone
 
         // If opponent has the item, assume it's in their assembly zone
-        if (game.hasItem(itemID) == 2 && dist(otherAss, otherPos) < dist(otherAss, myPos)) {
-            mathVecSubtract(itemDist, otherAss, myPos, 3);
-            mathVecSubtract(zoneDist, assemblyZone, otherAss, 3);
-        } else if (game.hasItem(itemID == 2)) {
-            continue;
-        }  else {
+        if (game.hasItem(itemID) == 2) {
+            if (dist(otherAss, otherPos) < dist(otherAss, myPos)) {
+                mathVecSubtract(itemDist, otherAss, myPos, 3);
+                mathVecSubtract(zoneDist, assemblyZone, otherAss, 3);
+            }
+            else {
+                continue;
+            }
+        }
+        else {
             mathVecSubtract(itemDist, itemPos[itemID], myPos, 3);
             mathVecSubtract(zoneDist, assemblyZone, itemPos[itemID], 3);
         }
@@ -257,8 +297,10 @@ int optimalItem() {
 
         float timeInZone = 180 - api.getTime() - travelTime;
 
-        if (itemPPS * timeInZone > maxPts) {
-            maxPts = itemPPS * timeInZone;
+        float itemPoints = itemPPS * timeInZone;
+
+        if (itemPoints > maxPts) {
+            maxPts = itemPoints;
             maxPtsID = itemID;
         }
     }
