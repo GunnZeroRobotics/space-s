@@ -17,17 +17,21 @@ int rB; // -1 = red, 1 = blue
 float firstItemAtt[3];
 
 void init() {
-    mass = 4.65; // 4.64968
-    accMax = 0.008476;
-    fMax = 0.039411;
-    fMaxSquared = 0.001553226921;
+    // Constants determined by testing
+    mass = 4.65; // 4.64968 
+    accMax = 0.008476; // Maximum Acceleration
+    fMax = 0.039411; // Maximum Force
+    fMaxSquared = 0.001553226921; 
 
-    game.dropSPS();
-    accFactor = 0.8;
+    // Drop first SPS at start position and change acceleration factor because satellite is now holding 2 SPSs
+    game.dropSPS(); 
+    accFactor = 0.8; 
 
+    // Get gameTime, SPHERE states, and item locations
     update();
-    rB = (myPos[1] < 0) ? -1 : 1;
-    spsLoc[0][0] = -0.5 * rB;
+    // Checks if we are blue or red and sets rB coefficient depending
+    rB = (myPos[1] < 0) ? -1 : 1; 
+    spsLoc[0][0] = -0.5 * rB; // Sets second SPS Location
     spsLoc[0][1] = 0.27 * rB;
     spsLoc[0][2] = 0.05 * rB;
 
@@ -37,12 +41,13 @@ void init() {
 }
 
 void loop() {
-    update();
+    update(); 
 
-    int spsHeld = game.getNumSPSHeld();
+    int spsHeld = game.getNumSPSHeld(); 
 
-    if (spsHeld == 2) {
-        if (dist(myPos, spsLoc[0]) < 0.07) {
+    // Drop second SPS if close enough to target location, or else keep moving towards target. 
+    if (spsHeld == 2) { 
+        if (dist(myPos, spsLoc[0]) < 0.07) { 
             game.dropSPS();
             accFactor = 0.7272727;
         } else {
@@ -52,7 +57,8 @@ void loop() {
         float otherDistZero = dist(itemPos[0], otherPos);
         float otherDistOne = dist(itemPos[1], otherPos);
 
-        if (otherDistOne < otherDistZero == (rB == -1)) {
+        // Checks which large item enemy is closest to, and heads towards the other large item. 
+        if (otherDistOne < otherDistZero == (rB == -1)) { 
             spsLoc[1][0] = -0.395 * rB;
             spsLoc[1][1] = -0.23 * rB;
             spsLoc[1][2] = -0.23 * rB;
@@ -64,7 +70,8 @@ void loop() {
             firstItemAtt[1] = -1 * rB;
         }
 
-        if (dist(myPos, spsLoc[1]) < 0.03) {
+        // Drops 3rd SPS 
+        if (dist(myPos, spsLoc[1]) < 0.03) { 
             game.dropSPS();
             accFactor = 1.0;
 
@@ -80,7 +87,7 @@ void loop() {
             api.setAttitudeTarget(firstItemAtt);
         }
     } else {
-        dock(optimalItem());
+        dock(optimalItem()); //Handles item phase for the rest of the game 
     }
 }
 
@@ -131,15 +138,18 @@ void dock(int itemID) {
     }
 }
 
+// Closed-loop implementation of movement with the setForce function
 void moveFast(float target[3]) {
     float vectorBetween[3];
     mathVecSubtract(vectorBetween, target, myPos, 3);
 
     float dist = mathVecMagnitude(vectorBetween, 3);
 
+    // Use setPosition if close enough because it is more accurate
     if (dist < 0.01) {
         api.setPositionTarget(target);
     } else {
+    // Use setForce
         float vMag = mathVecMagnitude(myVel, 3);
         float ang = angleBetween(vectorBetween, myVel); // Angle between velocity and vector between
         float vParallelMag = vMag * cosf(ang);
@@ -158,6 +168,9 @@ void moveFast(float target[3]) {
         float perpForce;
         float parallelForce = 0;
 
+        // Most of this is derived from calculations using kinematic equations
+        // The vector to the target is decomposed into parallel and perpendicular vectors
+        // The force required to reach the target is then calculated for the two vectors using fMax 
         if (dist < ((vParallelMag * vParallelMag) / (2 * accMax * accFactor * 0.785))) {
             parallelForce = -0.9 * fMax;
             float temp = mass * (vPerpMag / 2); // Reduces code size
@@ -177,6 +190,7 @@ void moveFast(float target[3]) {
             } 
         }
 
+        // Decomposed force vectors are combined into a single force vector 
         float totalForce[3];
         for (int i = 0; i < 3; i++) {
             totalForce[i] = (vPerp[i] * perpForce * -1) + (vectorBetween[i] * parallelForce);
@@ -191,7 +205,8 @@ void moveFast(float target[3]) {
     }
 }
 
-void pointToward(float target[3]) {
+// Rotates SPHERE towards target vector
+void pointToward(float target[3]) { 
     float vectorBetween[3];
     mathVecSubtract(vectorBetween, target, myPos, 3);
     mathVecNormalize(vectorBetween, 3);
@@ -226,10 +241,10 @@ void update() {
     api.getMyZRState(myState);
     api.getOtherZRState(otherState);
     for (int i = 0; i < 3; i++) {
-        myPos[i] = myState[i];
-        myVel[i] = myState[i + 3];
-        myAtt[i] = myState[i + 6];
-        otherPos[i] = otherState[i];
+        myPos[i] = myState[i]; // Position
+        myVel[i] = myState[i + 3]; // Velocity
+        myAtt[i] = myState[i + 6]; // Attitude 
+        otherPos[i] = otherState[i]; // Enemy Position
         // otherVel[i] = otherState[i + 3];
         // otherAtt[i] = otherAtt[i + 6];
     }
@@ -246,6 +261,9 @@ void update() {
 
 // Strategy Methods
 
+// Determines optimal item to pick up with respect to expected value of points we will get from the item for the rest of the game
+// Currently don't have an estimate of time it takes to travel, so just weighting items with respect to size and distance
+// Large items always prioritized regardless of distance away. 
 int optimalItem() {
     int maxPtsID = 0;
     float maxPts = -1;
