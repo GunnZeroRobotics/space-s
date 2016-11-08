@@ -138,15 +138,18 @@ void dock(int itemID) {
     }
 }
 
+// Closed-loop implementation of movement with the setForce function
 void moveFast(float target[3]) {
     float vectorBetween[3];
     mathVecSubtract(vectorBetween, target, myPos, 3);
 
     float dist = mathVecMagnitude(vectorBetween, 3);
 
+    // Use setPosition if close enough because it is more accurate
     if (dist < 0.01) {
         api.setPositionTarget(target);
     } else {
+    // Use setForce
         float vMag = mathVecMagnitude(myVel, 3);
         float ang = angleBetween(vectorBetween, myVel); // Angle between velocity and vector between
         float vParallelMag = vMag * cosf(ang);
@@ -165,6 +168,9 @@ void moveFast(float target[3]) {
         float perpForce;
         float parallelForce = 0;
 
+        // Most of this is derived from calculations using kinematic equations
+        // The vector to the target is decomposed into parallel and perpendicular vectors
+        // The force required to reach the target is then calculated for the two vectors using fMax 
         if (dist < ((vParallelMag * vParallelMag) / (2 * accMax * accFactor * 0.785))) {
             parallelForce = -0.9 * fMax;
             float temp = mass * (vPerpMag / 2); // Reduces code size
@@ -184,6 +190,7 @@ void moveFast(float target[3]) {
             } 
         }
 
+        // Decomposed force vectors are combined into a single force vector 
         float totalForce[3];
         for (int i = 0; i < 3; i++) {
             totalForce[i] = (vPerp[i] * perpForce * -1) + (vectorBetween[i] * parallelForce);
