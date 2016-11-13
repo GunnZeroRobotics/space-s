@@ -171,26 +171,6 @@ void dock(int itemID)
 // Closed-loop implementation of movement with the setForce function
 void moveFast(float target[3])
 {
-    // float vectorBetween[3];
-    // mathVecSubtract(vectorBetween, target, myPos, 3);
-    // float dist = mathVecMagnitude(vectorBetween, 3);
-    // if (dist < 0.1)
-    // {
-    //     api.setPositionTarget(target);
-    // }
-    // else
-    // {
-    //     float vbLength = mathVecNormalize(vectorBetween, 3);
-    //     float flocal = (vbLength > 0.40) ? 0.6 : 0.16 * vbLength;
-    //     flocal = (flocal < 0.010f) ? 0.010f : flocal;
-
-    //     for (int i = 0; i < 3; i++)
-    //     {
-    //         vectorBetween[i] *= vbLength * flocal;
-    //     }
-    //     api.setVelocityTarget(vectorBetween);
-    // }
-
     float vectorBetween[3];
     mathVecSubtract(vectorBetween, target, myPos, 3);
     float dist = mathVecMagnitude(vectorBetween, 3);
@@ -200,36 +180,56 @@ void moveFast(float target[3])
     }
     else
     {
-        float vMag = mathVecMagnitude(myVel, 3);
-        float ang = angleBetween(vectorBetween, myVel); // Angle between velocity and vector between
-        float vPerpMag = vMag * sinf(ang);
+        float vbLength = mathVecNormalize(vectorBetween, 3);
+        // float flocal = (vbLength > 0.40) ? 0.6 : 0.16 * vbLength;
+        // flocal = (flocal < 0.010f) ? 0.010f : flocal;
 
-        // if (vPerpMag > 0.01) {
-            // Find a vector in the direction of the perpendicular velocity
-            float vTemp[3];
-            mathVecCross(vTemp, myVel, vectorBetween);
-            float vPerp[3];
-            mathVecCross(vPerp, vectorBetween, vTemp);
-
-            // Normalize the vectors for scaling later
-            mathVecNormalize(vectorBetween, 3);
-            mathVecNormalize(vPerp, 3);
-
-            for (int i = 0; i < 3; i++) { vPerp[i] *= (mass * vPerpMag * -1); }
-            api.setForces(vPerp);
-            // return;
-        // }
-
-        mathVecNormalize(vectorBetween, 3);
-        if (mathVecMagnitude(myVel, 3) / dist > 0.19 && angleBetween(myVel, vectorBetween) < 3.14159/2)
+        for (int i = 0; i < 3; i++)
         {
-            for (int i = 0; i < 3; i++)
-            {
-                vectorBetween[i] *= -1;
-            }
+            vectorBetween[i] *= vbLength * 0.114; //* flocal;
         }
         api.setVelocityTarget(vectorBetween);
     }
+
+    // float vectorBetween[3];
+    // mathVecSubtract(vectorBetween, target, myPos, 3);
+    // float dist = mathVecMagnitude(vectorBetween, 3);
+    // if (dist < 0.1)
+    // {
+    //     api.setPositionTarget(target);
+    // }
+    // else
+    // {
+    //     float vMag = mathVecMagnitude(myVel, 3);
+    //     float ang = angleBetween(vectorBetween, myVel); // Angle between velocity and vector between
+    //     float vPerpMag = vMag * sinf(ang);
+
+    //     // if (vPerpMag > 0.01) {
+    //         // Find a vector in the direction of the perpendicular velocity
+    //         float vTemp[3];
+    //         mathVecCross(vTemp, myVel, vectorBetween);
+    //         float vPerp[3];
+    //         mathVecCross(vPerp, vectorBetween, vTemp);
+
+    //         // Normalize the vectors for scaling later
+    //         mathVecNormalize(vectorBetween, 3);
+    //         mathVecNormalize(vPerp, 3);
+
+    //         for (int i = 0; i < 3; i++) { vPerp[i] *= (mass * vPerpMag * -1); }
+    //         api.setForces(vPerp);
+    //         // return;
+    //     // }
+
+    //     mathVecNormalize(vectorBetween, 3);
+    //     if (mathVecMagnitude(myVel, 3) / dist > 0.19 && angleBetween(myVel, vectorBetween) < 3.14159/2)
+    //     {
+    //         for (int i = 0; i < 3; i++)
+    //         {
+    //             vectorBetween[i] *= -1;
+    //         }
+    //     }
+    //     api.setVelocityTarget(vectorBetween);
+    // }
 }
 
 // Rotates SPHERE towards target vector
