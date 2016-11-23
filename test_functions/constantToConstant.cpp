@@ -21,6 +21,10 @@ void loop()
         myVel[i] = myState[i + 3];
     }
 
+    if (dist(myPos, targ) < 0.05) {
+        DEBUG(("%d", api.getTime()));
+    }
+
     mathVecSubtract(vectorBetween, targ, myPos, 3);
     float dist = mathVecMagnitude(vectorBetween, 3);
     if (dist < 0.03)
@@ -29,13 +33,15 @@ void loop()
     }
     else
     {
-        if (mathVecMagnitude(myVel, 3) / dist > 0.165) { // This is slow down constant
+        if (mathVecMagnitude(myVel, 3) / dist > 0.14) { // This is slow down constant
+            DEBUG(("SLOW"));
             for (int i = 0; i < 3; i++) {
-                vectorBetween[i] = 0;
+                vectorBetween[i] *= 0.1; // This is velocity constant 2
             }
         } else {
+            DEBUG(("SPEED"));
             for (int i = 0; i < 3; i++) {
-                vectorBetween[i] *= 0.1; // This is velocity constant
+                vectorBetween[i] *= 0.2; // This is velocity constant 1
             }
         }
     }
