@@ -68,21 +68,21 @@ void loop()
         // Checks which large item enemy is closest to, and heads towards the other large item.
         if ((otherDistOne < otherDistZero) == (rB == -1))
         {
-            spsLoc[1][0] = -0.375 * rB;
+            spsLoc[1][0] = -0.365 * rB;
             spsLoc[1][1] = -0.23 * rB;
             spsLoc[1][2] = -0.23 * rB;
             firstItemAtt[0] = 1 * rB;
         }
         else
         {
-            spsLoc[1][0] = 0.22 * rB;
-            spsLoc[1][1] = 0.384 * rB;
-            spsLoc[1][2] = 0.22 * rB;
+            spsLoc[1][0] = 0.23 * rB;
+            spsLoc[1][1] = 0.378 * rB;
+            spsLoc[1][2] = 0.23 * rB;
             firstItemAtt[1] = -1 * rB;
         }
 
         // Drops 3rd SPS
-        if (dist(myPos, spsLoc[1]) < 0.03)
+        if (dist(myPos, spsLoc[1]) < 0.05)
         {
             game.dropSPS();
             accFactor = 1.0;
@@ -95,6 +95,7 @@ void loop()
             {
                 assemblyZone[i] = aZ[i];
             }
+            dock(optimalItem());
         }
         else
         {
@@ -117,6 +118,7 @@ void dock(int itemID)
 
     float minDockingDist = (itemID < 2) ? 0.151 : ((itemID < 4) ? 0.138 : 0.124);
     float maxDockingDist = (itemID < 2) ? 0.173 : ((itemID < 4) ? 0.160 : 0.146);
+    float avgDockingDist = (minDockingDist + maxDockingDist)/2;
 
     // If you are holding the item, put it in your assembly zone
     if (game.hasItem(itemID) == 1)
@@ -149,7 +151,7 @@ void dock(int itemID)
         // Scale targetPos to the item's position minus docking distance
         for (int i = 0; i < 3; i++)
         {
-            targetPos[i] = (vectorBetween[i] * (dist - maxDockingDist) / dist) + myPos[i];
+            targetPos[i] = (vectorBetween[i] * (dist - avgDockingDist) / dist) + myPos[i];
         }
 
         // Checks if SPHERE satisfies docking requirements -- if so, docks
@@ -168,68 +170,38 @@ void dock(int itemID)
     }
 }
 
-// Closed-loop implementation of movement with the setForce function
 void moveFast(float target[3])
 {
     float vectorBetween[3];
     mathVecSubtract(vectorBetween, target, myPos, 3);
     float dist = mathVecMagnitude(vectorBetween, 3);
-    if (dist < 0.1)
+    if (dist < 0.01)
     {
         api.setPositionTarget(target);
     }
     else
     {
-        float vbLength = mathVecNormalize(vectorBetween, 3);
-        // float flocal = (vbLength > 0.40) ? 0.6 : 0.16 * vbLength;
-        // flocal = (flocal < 0.010f) ? 0.010f : flocal;
+        mathVecNormalize(vectorBetween, 3);
 
-        for (int i = 0; i < 3; i++)
+        if (mathVecMagnitude(myVel, 3) / dist > 0.165)
         {
-            vectorBetween[i] *= vbLength * 0.114; //* flocal;
+            DEBUG(("SLOW"));
+            for (int i = 0; i < 3; i++)
+            {
+                vectorBetween[i] = 0;
+            }
         }
+        else
+        {
+            DEBUG(("SPEED"));
+            for (int i = 0; i < 3; i++)
+            {
+                vectorBetween[i] *= ((dist < 0.1) ? (-12.143 * dist + 1.9714) : 0.07);
+            }
+        }
+
         api.setVelocityTarget(vectorBetween);
     }
-
-    // float vectorBetween[3];
-    // mathVecSubtract(vectorBetween, target, myPos, 3);
-    // float dist = mathVecMagnitude(vectorBetween, 3);
-    // if (dist < 0.1)
-    // {
-    //     api.setPositionTarget(target);
-    // }
-    // else
-    // {
-    //     float vMag = mathVecMagnitude(myVel, 3);
-    //     float ang = angleBetween(vectorBetween, myVel); // Angle between velocity and vector between
-    //     float vPerpMag = vMag * sinf(ang);
-
-    //     // if (vPerpMag > 0.01) {
-    //         // Find a vector in the direction of the perpendicular velocity
-    //         float vTemp[3];
-    //         mathVecCross(vTemp, myVel, vectorBetween);
-    //         float vPerp[3];
-    //         mathVecCross(vPerp, vectorBetween, vTemp);
-
-    //         // Normalize the vectors for scaling later
-    //         mathVecNormalize(vectorBetween, 3);
-    //         mathVecNormalize(vPerp, 3);
-
-    //         for (int i = 0; i < 3; i++) { vPerp[i] *= (mass * vPerpMag * -1); }
-    //         api.setForces(vPerp);
-    //         // return;
-    //     // }
-
-    //     mathVecNormalize(vectorBetween, 3);
-    //     if (mathVecMagnitude(myVel, 3) / dist > 0.19 && angleBetween(myVel, vectorBetween) < 3.14159/2)
-    //     {
-    //         for (int i = 0; i < 3; i++)
-    //         {
-    //             vectorBetween[i] *= -1;
-    //         }
-    //     }
-    //     api.setVelocityTarget(vectorBetween);
-    // }
 }
 
 // Rotates SPHERE towards target vector

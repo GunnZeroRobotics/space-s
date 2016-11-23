@@ -13,7 +13,7 @@ void init() {
     targ[1] = 0.7;
     targ[2] = 0.7;
 
-    corner[0] = 0.0;
+    corner[0] = -0.5;
     corner[1] = 0.7;
     corner[2] = 0.7;
 
@@ -23,7 +23,7 @@ void init() {
 
 void loop() {
 
-    float k = 0.14;
+    float k = 0.25;
 
     api.getMyZRState(myState);
     for (int i = 0; i < 3; i++) {
