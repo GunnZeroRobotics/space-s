@@ -94,7 +94,7 @@ void moveFast(float target[3])
             DEBUG(("SLOW"));
             for (int i = 0; i < 3; i++)
             {
-                vectorBetween[i] = 0;
+                vectorBetween[i] *= 0.05;
             }
         }
         else

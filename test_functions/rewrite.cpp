@@ -68,7 +68,7 @@ void loop()
         // Checks which large item enemy is closest to, and heads towards the other large item.
         if ((otherDistOne < otherDistZero) == (rB == -1))
         {
-            spsLoc[1][0] = -0.365 * rB;
+            spsLoc[1][0] = -0.368 * rB;
             spsLoc[1][1] = -0.23 * rB;
             spsLoc[1][2] = -0.23 * rB;
             firstItemAtt[0] = 1 * rB;
@@ -181,24 +181,25 @@ void moveFast(float target[3])
     }
     else
     {
-        mathVecNormalize(vectorBetween, 3);
+        
+        // mathVecNormalize(vectorBetween, 3);
 
-        if (mathVecMagnitude(myVel, 3) / dist > 0.165)
-        {
-            DEBUG(("SLOW"));
-            for (int i = 0; i < 3; i++)
-            {
-                vectorBetween[i] = 0;
-            }
-        }
-        else
-        {
-            DEBUG(("SPEED"));
-            for (int i = 0; i < 3; i++)
-            {
-                vectorBetween[i] *= ((dist < 0.1) ? (-12.143 * dist + 1.9714) : 0.07);
-            }
-        }
+        // if (mathVecMagnitude(myVel, 3) / dist > 0.175)
+        // {
+        //     DEBUG(("SLOW"));
+        //     for (int i = 0; i < 3; i++)
+        //     {
+        //         vectorBetween[i] = 0;
+        //     }
+        // }
+        // else
+        // {
+        //     DEBUG(("SPEED"));
+        //     for (int i = 0; i < 3; i++)
+        //     {
+        //         vectorBetween[i] *= ((dist < 0.2) ? (-25 * dist + 5.1) : 0.7);
+        //     }
+        // }
 
         api.setVelocityTarget(vectorBetween);
     }
