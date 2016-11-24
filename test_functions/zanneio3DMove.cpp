@@ -24,6 +24,7 @@ float               destination[3], initial_point[3], zone[4], *cpos, *cvel, *ca
                     desired_attitude[3], distance_from_destination,
                     desired_velocity, heading[3], ovelocity;
 
+float initPos[3];
 
 void init(){
 	//This function is called once when your code is first loaded.
@@ -35,6 +36,12 @@ void init(){
 	zone[0]=0; zone[1]=0; zone[2]=0; zone[3]=0;
 	id0=-1;
 	DEBUG(("-------Greetings from ZANNEIO Stardust v02.G------"));
+
+	api.getMyZRState(State);
+
+    initPos[0] = State[0];
+    initPos[1] = State[1];
+    initPos[2] = State[2];
 }
 
 
@@ -108,6 +115,11 @@ void loop(){
     destination[1] = 0.7;
     destination[2] = 0.7;
 	
+    if (dist(cpos, destination) < .022 && mathVecMagnitude(cvel, 3) < 0.01) {
+        DEBUG(("dist: %f, time: %d, fuel: %f", (dist(destination, initPos)), api.getTime(), ((60-game.getFuelRemaining())/60)));
+    }
+    r = 0.03;
+
     //--------------------------------------------------------
 	//moving stuff
     mathVecSubtract(heading, destination, cpos, 3);
@@ -271,4 +283,12 @@ void   LinearComb(float *r, float  *a, float *b,  float x, float y){
     
     for(i=0;i<3;i++)
         r[i] = a[i]*x + b[i]*y;
+}
+
+// Returns the magnitude of the difference of two vectors
+float dist(float a[3], float b[3])
+{
+    float diff[3];
+    mathVecSubtract(diff, a, b, 3);
+    return mathVecMagnitude(diff, 3);
 }

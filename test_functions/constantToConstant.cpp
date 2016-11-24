@@ -10,6 +10,12 @@ void init()
     targ[0] = 0.7;
     targ[1] = 0.7;
     targ[2] = 0.7;
+
+    api.getMyZRState(myState);
+    for (int i = 0; i < 3; i++)
+    {
+        initPos[i] = myState[i];
+    }
 }
 
 void loop()
@@ -21,8 +27,8 @@ void loop()
         myVel[i] = myState[i + 3];
     }
 
-    if (dist(myPos, targ) < 0.05) {
-        DEBUG(("%d", api.getTime()));
+    if (dist(myPos, targ) < 0.022 && mathVecMagnitude(myVel, 3) < 0.01) {
+        DEBUG(("dist: %f, fuel: %f, time: %d", dist(myPos, initPos), ((60-game.getFuelRemaining())/60), api.getTime()));
     }
 
     mathVecSubtract(vectorBetween, targ, myPos, 3);
@@ -33,15 +39,15 @@ void loop()
     }
     else
     {
-        if (mathVecMagnitude(myVel, 3) / dist > 0.14) { // This is slow down constant
+        if (mathVecMagnitude(myVel, 3) / dist > 0.175) { // This is slow down constant
             DEBUG(("SLOW"));
             for (int i = 0; i < 3; i++) {
-                vectorBetween[i] *= 0.1; // This is velocity constant 2
+                vectorBetween[i] *= 0; // This is velocity constant 2
             }
         } else {
             DEBUG(("SPEED"));
             for (int i = 0; i < 3; i++) {
-                vectorBetween[i] *= 0.2; // This is velocity constant 1
+                vectorBetween[i] *= 0.1; // This is velocity constant 1
             }
         }
     }
